@@ -431,7 +431,17 @@ class FloppaPower {
         hikariConfig.username = username
         hikariConfig.password = password
 
-        return connectToDatabase(HikariDataSource(hikariConfig))
+        var database: Database? = null
+        while (database == null) {
+            try {
+                database = connectToDatabase(HikariDataSource(hikariConfig))
+                break
+            } catch (e: Exception) {
+                logger.warn(e) { "Failed to connect to the database, retrying in 2s..." }
+            }
+            Thread.sleep(2_000)
+        }
+        return database!!
     }
 
     private fun createHikariConfig(): HikariConfig {

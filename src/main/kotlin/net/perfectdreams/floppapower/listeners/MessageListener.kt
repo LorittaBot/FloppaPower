@@ -332,7 +332,7 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
                                     .sendMessage("A denúncia já tinha sido processada, mas como parece que os botões ainda estavam ativos eu mesmo atualizei a mensagem! <a:floppaTeeth:849638419885195324>")
                                     .queue()
                             }
-                        
+
                         return@newSuspendedTransaction Pair(false, metadata.type)
                     }
 
@@ -596,7 +596,7 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
             ActionRow.of(
                 Button.of(
                     ButtonStyle.SUCCESS,
-                    "finished",
+                    "finished-${metadata.id.value}",
                     when (metadata.type.remove) {
                         true -> "Yay, os não-meliantes foram removidos do xilindró!"
                         false -> "Yay, os meliantes foram adicionados ao xilindró!"

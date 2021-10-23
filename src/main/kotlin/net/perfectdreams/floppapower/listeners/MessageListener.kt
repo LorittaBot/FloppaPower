@@ -322,9 +322,17 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
                     }
 
                     if (metadata.processed) {
-                        event.deferReply(true)
-                            .setContent("A mensagem já foi processada, talvez eu tenha esquecido de ter atualizado a mensagem! <a:floppaTeeth:849638419885195324>")
-                            .queue()
+                        // Update the message if it was processed but the buttons are somehow active
+                        event.deferEdit()
+                            .setContent(generateContentFromMetadata(metadata))
+                            .setActionRows(generateActionRowFromMetadata(metadata))
+                            .queue {
+                                // And tell the user that it was already processed
+                                it.setEphemeral(true)
+                                    .sendMessage("A denúncia já tinha sido processada, mas como parece que os botões ainda estavam ativos eu mesmo atualizei a mensagem! <a:floppaTeeth:849638419885195324>")
+                                    .queue()
+                            }
+                        
                         return@newSuspendedTransaction Pair(false, metadata.type)
                     }
 

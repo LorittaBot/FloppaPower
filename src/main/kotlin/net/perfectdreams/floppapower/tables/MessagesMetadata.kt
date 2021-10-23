@@ -11,4 +11,5 @@ object MessagesMetadata : LongIdTable() {
     val size = integer("size")
     val submittedBy = long("submitted_by").index()
     val approvedBy = jsonb("approved_by") // This is later converted into a proper thing
+    val processed = bool("processed").default(false)
 }

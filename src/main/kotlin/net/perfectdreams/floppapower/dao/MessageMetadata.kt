@@ -16,6 +16,7 @@ class MessageMetadata(id: EntityID<Long>) : LongEntity(id) {
     var size by MessagesMetadata.size
     var submittedBy by MessagesMetadata.submittedBy
     var approvedBy by MessagesMetadata.approvedBy
+    var processed by MessagesMetadata.processed
 
     val approvedByAsList: List<UserWithRole>
         get() = Json.decodeFromString(approvedBy)

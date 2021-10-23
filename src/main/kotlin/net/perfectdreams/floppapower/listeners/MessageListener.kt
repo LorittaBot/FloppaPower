@@ -84,7 +84,14 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
                         .setAllowedMentions(listOf(Message.MentionType.ROLE)) // none. thank you, next
                         .build()
                 ).addFile(
-                    checkUserIdsInLines(event.jda, data).joinToString("\n").toByteArray(Charsets.UTF_8),
+                    checkUserIdsInLines(event.jda, data)
+                        .toMutableList()
+                        .apply {
+                            this.add(0, "")
+                            this.add(0, "# Message Metadata ID: ${metadata.id.value}")
+                        }
+                        .joinToString("\n")
+                        .toByteArray(Charsets.UTF_8),
                     "report.txt"
                 ).queue()
             }
@@ -115,7 +122,15 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
                         .setAllowedMentions(listOf(Message.MentionType.ROLE)) // only role mentions
                         .build()
                 ).addFile(
-                    checkAvatarHashesInLines(event.jda, validatedData).joinToString("\n").toByteArray(Charsets.UTF_8),
+                    checkAvatarHashesInLines(event.jda, validatedData)
+                        .toMutableList()
+                        .apply {
+                            this.add(0, "")
+                            this.add(0, "# Message Metadata ID: ${metadata.id.value}")
+                        }
+                        .joinToString("\n")
+                        .toByteArray(Charsets.UTF_8),
+
                     "report.txt"
                 ).queue()
             }
@@ -283,7 +298,7 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
         if (!event.componentId.startsWith("approve_ban_entry-") && !event.componentId.startsWith("delete_ban_entry-"))
             return
 
-        val message = event.message ?: return
+        val message = event.message
         val metadataId = event.componentId.removePrefix("approve_ban_entry-").removePrefix("delete_ban_entry-")
             .toLong()
         val member = event.member ?: return
@@ -291,7 +306,12 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
         GlobalScope.launch {
             val shouldCheck = mutex.withLock {
                 newSuspendedTransaction {
-                    val metadata = MessageMetadata.findById(metadataId) ?: return@newSuspendedTransaction Pair(false, null)
+                    val metadata = MessageMetadata.findById(metadataId) ?: run {
+                        event.deferReply(true)
+                            .setContent("Pelo visto eu não tenho os dados desta mensagem guardados... Talvez a denúncia já foi aprovada mas eu esqueci de atualizar a mensagem <a:SCfloppaSHAKE:853893512542289930>")
+                            .queue()
+                        return@newSuspendedTransaction Pair(false, null)
+                    }
 
                     val allMatchingRolesFromTheUser = member.roles.filter {
                         it.color != null && it.name !in GENERIC_ROLES
@@ -299,6 +319,13 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
 
                     val topRole = allMatchingRolesFromTheUser.firstOrNull {
                         it.idLong !in metadata.approvedByAsList.map { it.roleId }
+                    }
+
+                    if (metadata.processed) {
+                        event.deferReply(true)
+                            .setContent("A mensagem já foi processada, talvez eu tenha esquecido de ter atualizado a mensagem! <a:floppaTeeth:849638419885195324>")
+                            .queue()
+                        return@newSuspendedTransaction Pair(false, metadata.type)
                     }
 
                     if (event.componentId.startsWith("delete_ban_entry-")) {
@@ -343,6 +370,8 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
                                 .queue()
 
                             if (metadata.approvedByAsList.size >= metadata.type.requiredApprovals) {
+                                metadata.processed = true
+
                                 // So, this depends on if this is a delete or create operation
                                 // If it is a removal process, we will invalidate them
                                 if (metadata.type.remove) {
@@ -351,9 +380,7 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
                                     insertValuesFromMetadataIntoDatabase(metadata, message)
                                 }
 
-                                metadata.delete()
-
-
+                                // We won't delete the metadata because what if we need to reprocess the report?
                                 return@newSuspendedTransaction Pair(true, metadata.type)
                             }
                         }

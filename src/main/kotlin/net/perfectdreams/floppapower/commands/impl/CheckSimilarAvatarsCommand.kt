@@ -20,7 +20,7 @@ class CheckSimilarAvatarsCommand(private val m: FloppaPower) : AbstractSlashComm
         val reply = event.deferReply()
 
         reply.addEmbeds(buildAvatarMessages(event.jda, pageId))
-        reply.addActionRow(*buildActionRow(1, event.user.idLong).toTypedArray())
+        reply.addActionRow(*buildActionRow(pageId, event.user.idLong).toTypedArray())
         reply.queue()
     }
 

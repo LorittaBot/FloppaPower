@@ -126,7 +126,7 @@ class FloppaPowerWebAPI(val floppaPower: FloppaPower, val jda: JDA) {
                     if (user == null) {
                         call.respondText("[]", ContentType.Application.Json, HttpStatusCode.NotFound)
                     } else {
-                        val mutualGuilds = jda.getMutualGuilds()
+                        val mutualGuilds = jda.getMutualGuilds(user)
                         call.respondText(
                             Json.encodeToString(
                                 mutualGuilds.map {

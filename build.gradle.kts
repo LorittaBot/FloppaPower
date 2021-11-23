@@ -29,6 +29,7 @@ dependencies {
     implementation("org.postgresql:postgresql:42.2.24")
     implementation("com.zaxxer:HikariCP:5.0.0")
     implementation("io.ktor:ktor-server-netty:1.6.5")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
 
     // Kord
     // implementation("dev.kord:kord-gateway:0.8.x-SNAPSHOT")

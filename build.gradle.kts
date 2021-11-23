@@ -18,8 +18,8 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib"))
     implementation("net.dv8tion:JDA:4.3.0_334")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.2.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.3.0")
     implementation("org.jetbrains.exposed:exposed-core:0.31.1")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.31.1")
     implementation("org.jetbrains.exposed:exposed-dao:0.31.1")
@@ -28,6 +28,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.5.2")
     implementation("org.postgresql:postgresql:42.2.24")
     implementation("com.zaxxer:HikariCP:5.0.0")
+    implementation("io.ktor:ktor-server-netty:1.6.5")
 
     // Kord
     // implementation("dev.kord:kord-gateway:0.8.x-SNAPSHOT")

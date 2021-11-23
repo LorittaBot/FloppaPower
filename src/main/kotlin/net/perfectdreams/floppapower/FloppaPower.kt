@@ -29,6 +29,7 @@ import net.perfectdreams.floppapower.listeners.FloppaGangButtonListener
 import net.perfectdreams.floppapower.listeners.JoinListener
 import net.perfectdreams.floppapower.listeners.MessageListener
 import net.perfectdreams.floppapower.listeners.SlashCommandListener
+import net.perfectdreams.floppapower.rest.FloppaPowerWebAPI
 import net.perfectdreams.floppapower.tables.BlockedAvatarHashes
 import net.perfectdreams.floppapower.tables.BlockedAvatarHashesBanEntries
 import net.perfectdreams.floppapower.tables.BlockedUserBanEntries
@@ -208,6 +209,9 @@ class FloppaPower {
                         .addChoice("Gosto de ver pegando fogo!", "36500")
                 )
         )?.queue()
+
+        val webAPI = FloppaPowerWebAPI(this)
+        webAPI.start()
     }
 
     suspend fun processIfMemberShouldBeBanned(guild: Guild, member: Member, checkedDueTo: CheckedDueToType) {

@@ -114,7 +114,8 @@ class FloppaPower {
                 SlashCommandListener(this),
                 FloppaGangButtonListener(this),
                 AvatarChangeListener(this)
-            ).build().awaitReady()
+            )
+            .build()
 
         thread {
             while (true) {

@@ -210,7 +210,7 @@ class FloppaPower {
                 )
         )?.queue()
 
-        val webAPI = FloppaPowerWebAPI(this)
+        val webAPI = FloppaPowerWebAPI(this, jda)
         webAPI.start()
     }
 

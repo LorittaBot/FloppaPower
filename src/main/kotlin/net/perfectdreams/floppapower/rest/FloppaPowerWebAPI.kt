@@ -33,7 +33,7 @@ class FloppaPowerWebAPI(val floppaPower: FloppaPower) {
                             BlockedUsers.select {
                                 BlockedUsers.valid eq true
                             }.map {
-                                it[BlockedUsers.userId]
+                                it[BlockedUsers.userId].value
                             }
                         }
                     }
@@ -76,7 +76,7 @@ class FloppaPowerWebAPI(val floppaPower: FloppaPower) {
                             BlockedAvatarHashes.select {
                                 BlockedAvatarHashes.valid eq true
                             }.map {
-                                it[BlockedAvatarHashes.avatarHash]
+                                it[BlockedAvatarHashes.avatarHash].value
                             }
                         }
                     }

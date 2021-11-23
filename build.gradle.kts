@@ -54,9 +54,9 @@ jib {
         }
     }
 
-    /* from {
-        image = "openjdk:17-slim-bullseye"
-    } */
+    from {
+        image = "eclipse-temurin:17-jdk-alpine"
+    }
 }
 
 tasks {

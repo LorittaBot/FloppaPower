@@ -54,9 +54,9 @@ jib {
         }
     }
 
-    from {
+    /* from {
         image = "openjdk:17-slim-bullseye"
-    }
+    } */
 }
 
 tasks {

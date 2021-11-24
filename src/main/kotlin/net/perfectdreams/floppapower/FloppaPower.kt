@@ -109,7 +109,7 @@ class FloppaPower {
         ).setMemberCachePolicy(MemberCachePolicy.ALL) // we, want, EVERYTHING
             .setChunkingFilter(ChunkingFilter.ALL) // EVERYTHING
             .setStatus(OnlineStatus.INVISIBLE) // no one will ever know!
-            .setShards(4)
+            .setShardsTotal(4)
             .build()
 
         shardManager.addEventListener(

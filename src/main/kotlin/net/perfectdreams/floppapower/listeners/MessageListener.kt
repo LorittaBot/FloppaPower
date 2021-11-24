@@ -60,79 +60,90 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
 
         if (type == "selfbot_id" || type == "selfbot_ids" || type == "delete_selfbot_id" || type == "delete_selfbot_ids") {
             GlobalScope.launch {
-                val data = retrieveUserIdsFromMessage(event.message)
-                event.message.delete().queue()
+                try {
+                    val data = retrieveUserIdsFromMessage(event.message)
+                    event.message.delete().queue()
 
-                val metadata = transaction {
-                    MessageMetadata.new {
-                        this.type = when {
-                            type.startsWith("delete_") -> MetadataEntryType.DELETE_SELFBOT_ID
-                            else -> MetadataEntryType.SELFBOT_ID
+                    val metadata = transaction {
+                        MessageMetadata.new {
+                            this.type = when {
+                                type.startsWith("delete_") -> MetadataEntryType.DELETE_SELFBOT_ID
+                                else -> MetadataEntryType.SELFBOT_ID
+                            }
+
+                            this.comment = comment
+                            this.submittedBy = event.author.idLong
+                            this.size = data.size
+                            this.approvedBy = "[]"
                         }
-
-                        this.comment = comment
-                        this.submittedBy = event.author.idLong
-                        this.size = data.size
-                        this.approvedBy = "[]"
                     }
-                }
 
-                event.channel.sendMessage(
-                    MessageBuilder()
-                        .setContent(generateContentFromMetadata(metadata))
-                        .setActionRows(generateActionRowFromMetadata(metadata))
-                        .setAllowedMentions(listOf(Message.MentionType.ROLE)) // none. thank you, next
-                        .build()
-                ).addFile(
-                    checkUserIdsInLines(event.jda, data)
-                        .toMutableList()
-                        .apply {
-                            this.add(0, "")
-                            this.add(0, "# Message Metadata ID: ${metadata.id.value}")
-                        }
-                        .joinToString("\n")
-                        .toByteArray(Charsets.UTF_8),
-                    "report.txt"
-                ).queue()
+                    event.channel.sendMessage(
+                        MessageBuilder()
+                            .setContent(generateContentFromMetadata(metadata))
+                            .setActionRows(generateActionRowFromMetadata(metadata))
+                            .setAllowedMentions(listOf(Message.MentionType.ROLE)) // none. thank you, next
+                            .build()
+                    ).addFile(
+                        checkUserIdsInLines(event.jda, data)
+                            .toMutableList()
+                            .apply {
+                                this.add(0, "")
+                                this.add(0, "# Message Metadata ID: ${metadata.id.value}")
+                            }
+                            .joinToString("\n")
+                            .toByteArray(Charsets.UTF_8),
+                        "report.txt"
+                    ).queue()
+                } catch (e: Throwable) {
+                    logger.warn(e) { "Something went wrong while trying to create a selfbot_id report!" }
+                    event.channel.sendMessage("Algo deu errado ao tentar criar a sua denúncia... Is it too late now to say sorry?")
+                        .queue()
+                }
             }
         } else if (type == "selfbot_avatar_hash" || type == "selfbot_avatar_hashes" || type == "delete_selfbot_avatar_hash" || type == "delete_selfbot_avatar_hashes") {
             GlobalScope.launch {
-                val validatedData = retrieveAvatarHashesFromMessage(event.message)
+                try {
+                    val validatedData = retrieveAvatarHashesFromMessage(event.message)
+                    event.message.delete().queue()
 
-                event.message.delete().queue()
+                    val metadata = transaction {
+                        MessageMetadata.new {
+                            this.type = when {
+                                type.startsWith("delete_") -> MetadataEntryType.DELETE_AVATAR_HASHES
+                                else -> MetadataEntryType.AVATAR_HASHES
+                            }
 
-                val metadata = transaction {
-                    MessageMetadata.new {
-                        this.type = when {
-                            type.startsWith("delete_") -> MetadataEntryType.DELETE_AVATAR_HASHES
-                            else -> MetadataEntryType.AVATAR_HASHES
+                            this.comment = comment
+                            this.submittedBy = event.author.idLong
+                            this.size = validatedData.size
+                            this.approvedBy = "[]"
                         }
-
-                        this.comment = comment
-                        this.submittedBy = event.author.idLong
-                        this.size = validatedData.size
-                        this.approvedBy = "[]"
                     }
+
+                    event.channel.sendMessage(
+                        MessageBuilder()
+                            .setContent(generateContentFromMetadata(metadata))
+                            .setActionRows(generateActionRowFromMetadata(metadata))
+                            .setAllowedMentions(listOf(Message.MentionType.ROLE)) // only role mentions
+                            .build()
+                    ).addFile(
+                        checkAvatarHashesInLines(event.jda, validatedData)
+                            .toMutableList()
+                            .apply {
+                                this.add(0, "")
+                                this.add(0, "# Message Metadata ID: ${metadata.id.value}")
+                            }
+                            .joinToString("\n")
+                            .toByteArray(Charsets.UTF_8),
+
+                        "report.txt"
+                    ).queue()
+                } catch (e: Throwable) {
+                    logger.warn(e) { "Something went wrong while trying to create a selfbot_id report!" }
+                    event.channel.sendMessage("Algo deu errado ao tentar criar a sua denúncia... Is it too late now to say sorry?")
+                        .queue()
                 }
-
-                event.channel.sendMessage(
-                    MessageBuilder()
-                        .setContent(generateContentFromMetadata(metadata))
-                        .setActionRows(generateActionRowFromMetadata(metadata))
-                        .setAllowedMentions(listOf(Message.MentionType.ROLE)) // only role mentions
-                        .build()
-                ).addFile(
-                    checkAvatarHashesInLines(event.jda, validatedData)
-                        .toMutableList()
-                        .apply {
-                            this.add(0, "")
-                            this.add(0, "# Message Metadata ID: ${metadata.id.value}")
-                        }
-                        .joinToString("\n")
-                        .toByteArray(Charsets.UTF_8),
-
-                    "report.txt"
-                ).queue()
             }
         }
     }
@@ -199,11 +210,16 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
 
     private suspend fun checkUserIdsInLines(jda: JDA, data: List<Long>): List<String> {
         val newLines = mutableListOf<String>()
+        var idx = 0
         val retrievedUsers = data.map {
             it to try {
+                logger.info { "Querying $it... Current IDs checked: $idx/${data.size}" }
                 jda.retrieveUserById(it, false).await()
             } catch (e: ErrorResponseException) {
                 null
+            }.also {
+                // Kinda weird but ok right
+                idx++
             }
         }
 

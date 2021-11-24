@@ -55,7 +55,7 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
             return
 
         val perLines = event.message.contentRaw.lines()
-        val type = perLines.firstOrNull() ?: return
+        val type = perLines.firstOrNull()?.trim() ?: return
         val comment = perLines.filter { it.startsWith("#") }.map { it.removePrefix("#") }.joinToString("\n") { it.trim() }
 
         if (type == "selfbot_id" || type == "selfbot_ids" || type == "delete_selfbot_id" || type == "delete_selfbot_ids") {

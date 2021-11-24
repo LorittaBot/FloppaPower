@@ -14,7 +14,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
-import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.FloppaPower
 import net.perfectdreams.floppapower.data.BlockedAvatarHashResponse
 import net.perfectdreams.floppapower.data.BlockedUserResponse
@@ -23,12 +23,11 @@ import net.perfectdreams.floppapower.data.Member
 import net.perfectdreams.floppapower.data.User
 import net.perfectdreams.floppapower.tables.BlockedAvatarHashes
 import net.perfectdreams.floppapower.tables.BlockedUsers
-import net.perfectdreams.floppapower.tables.BlockedUsers.userId
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 
-class FloppaPowerWebAPI(val floppaPower: FloppaPower, val jda: JDA) {
+class FloppaPowerWebAPI(val floppaPower: FloppaPower, val shardManager: ShardManager) {
     @OptIn(ExperimentalSerializationApi::class)
     fun start() {
         embeddedServer(Netty, port = 8000) {
@@ -122,11 +121,11 @@ class FloppaPowerWebAPI(val floppaPower: FloppaPower, val jda: JDA) {
                 get("/api/v1/users/{userId}/guilds") {
                     val userId = call.parameters.getOrFail("userId").toLong()
 
-                    val user = jda.getUserById(userId)
+                    val user = shardManager.getUserById(userId)
                     if (user == null) {
                         call.respondText("[]", ContentType.Application.Json, HttpStatusCode.NotFound)
                     } else {
-                        val mutualGuilds = jda.getMutualGuilds(user)
+                        val mutualGuilds = shardManager.getMutualGuilds(user)
                         call.respondText(
                             Json.encodeToString(
                                 mutualGuilds.map {
@@ -157,7 +156,7 @@ class FloppaPowerWebAPI(val floppaPower: FloppaPower, val jda: JDA) {
                 get("/api/v1/avatar-hashes/{avatarHash}/users") {
                     val avatarHash = call.parameters.getOrFail("avatarHash")
 
-                    val matchedUsers = jda.userCache.filter { it.avatarId == avatarHash }
+                    val matchedUsers = shardManager.userCache.filter { it.avatarId == avatarHash }
                     if (matchedUsers.isEmpty()) {
                         call.respondText("[]", ContentType.Application.Json, HttpStatusCode.NotFound)
                     } else {

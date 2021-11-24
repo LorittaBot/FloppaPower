@@ -2,11 +2,12 @@ package net.perfectdreams.floppapower.commands.impl
 
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
+import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.FloppaPower
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
 import net.perfectdreams.floppapower.utils.Constants
 
-class SameAvatarHashCommand(private val m: FloppaPower) : AbstractSlashCommand("sameavatar/hash") {
+class SameAvatarHashCommand(private val m: FloppaPower, private val shardManager: ShardManager) : AbstractSlashCommand("sameavatar/hash") {
     override fun execute(event: SlashCommandEvent) {
         val avatarId = event.getOption("hash")?.asString
 
@@ -17,7 +18,7 @@ class SameAvatarHashCommand(private val m: FloppaPower) : AbstractSlashCommand("
             return
         }
 
-        val matchedUsers = event.jda.userCache.filter { it.avatarId == avatarId }
+        val matchedUsers = shardManager.userCache.filter { it.avatarId == avatarId }
         if (matchedUsers.isEmpty()) {
             event.deferReply(true)
                 .setContent("Ninguém está usando esse avatar! <a:floppaTeeth:849638419885195324>")

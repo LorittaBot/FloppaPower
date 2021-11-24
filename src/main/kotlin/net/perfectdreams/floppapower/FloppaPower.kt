@@ -7,7 +7,6 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import mu.KotlinLogging
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.MessageBuilder
 import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.Permission
@@ -18,6 +17,8 @@ import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData
 import net.dv8tion.jda.api.requests.GatewayIntent
+import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
+import net.dv8tion.jda.api.sharding.ShardManager
 import net.dv8tion.jda.api.utils.ChunkingFilter
 import net.dv8tion.jda.api.utils.MemberCachePolicy
 import net.perfectdreams.floppapower.dao.BlockedAvatarHash
@@ -100,7 +101,7 @@ class FloppaPower {
             exitProcess(0)
         }
 
-        val jda = JDABuilder.createDefault(
+        val shardManager = DefaultShardManagerBuilder.createDefault(
             System.getenv("FLOPPA_DISCORD_TOKEN"),
             GatewayIntent.GUILD_MEMBERS,
             GatewayIntent.GUILD_MESSAGES,
@@ -108,14 +109,16 @@ class FloppaPower {
         ).setMemberCachePolicy(MemberCachePolicy.ALL) // we, want, EVERYTHING
             .setChunkingFilter(ChunkingFilter.ALL) // EVERYTHING
             .setStatus(OnlineStatus.INVISIBLE) // no one will ever know!
-            .addEventListeners(
-                MessageListener(this),
-                JoinListener(this),
-                SlashCommandListener(this),
-                FloppaGangButtonListener(this),
-                AvatarChangeListener(this)
-            )
+            .setShards(4)
             .build()
+
+        shardManager.addEventListener(
+            MessageListener(this, shardManager),
+            JoinListener(this, shardManager),
+            SlashCommandListener(this, shardManager),
+            FloppaGangButtonListener(this, shardManager),
+            AvatarChangeListener(this, shardManager)
+        )
 
         thread {
             while (true) {
@@ -141,7 +144,7 @@ class FloppaPower {
                 if (builder.isNotEmpty()) {
                     try {
                         // Send the message if the content is not empty
-                        val reportChannelId = jda.getTextChannelById(Constants.LOG_CHANNEL_ID) ?: continue
+                        val reportChannelId = shardManager.getTextChannelById(Constants.LOG_CHANNEL_ID) ?: continue
                         reportChannelId.sendMessage(MessageBuilder(builder.toString()).setAllowedMentions(listOf()).build()).queue()
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -152,25 +155,25 @@ class FloppaPower {
             }
         }
 
-        jda.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(
+        shardManager.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(
             CommandData("guilds", "Mostra quais servidores o Floppa está")
         )?.queue()
 
-        jda.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(
+        shardManager.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(
             CommandData("checkguild", "Verifique meliantes em um servidor")
                 .addOption(OptionType.STRING, "guild_id", "ID do Servidor", true)
         )?.queue()
 
-        jda.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(
+        shardManager.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(
             CommandData("checkguilds", "Verifique meliantes em todos os servidores que eu estou")
         )?.queue()
 
-        jda.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(
+        shardManager.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(
             CommandData("checksimilaravatars", "Verifique meliantes com avatares similares")
                 .addOption(OptionType.INTEGER, "page", "Página", false)
         )?.queue()
 
-        jda.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(
+        shardManager.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(
             CommandData("sameavatar", "Verifique meliantes que possuem o mesmo avatar")
                 .addSubcommands(
                     SubcommandData("hash", "Verifique meliantes que possuem o mesmo avatar pelo hash")
@@ -180,12 +183,12 @@ class FloppaPower {
                 )
         )?.queue()
 
-        jda.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(
+        shardManager.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(
             CommandData("sharedguilds", "Verifique aonde os meliantes estão na fuga")
                 .addOption(OptionType.USER, "user", "O meliante", true)
         )?.queue()
 
-        jda.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(
+        shardManager.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(
             CommandData("susjoins", "Verifique meliantes que entraram em vários servidores em seguida")
                 .addOptions(
                     OptionData(OptionType.STRING, "time", "A diferença + e - de tempo que o meliante entrou, baseado no tempo de entrada no \"meio\" dos joins", true)
@@ -211,11 +214,11 @@ class FloppaPower {
                 )
         )?.queue()
 
-        val webAPI = FloppaPowerWebAPI(this, jda)
+        val webAPI = FloppaPowerWebAPI(this, shardManager)
         webAPI.start()
     }
 
-    suspend fun processIfMemberShouldBeBanned(guild: Guild, member: Member, checkedDueTo: CheckedDueToType) {
+    suspend fun processIfMemberShouldBeBanned(shardManager: ShardManager, guild: Guild, member: Member, checkedDueTo: CheckedDueToType) {
         /* if (member.roles.isNotEmpty()) // Ignore members with roles
             return */
         // logger.info { "Checking if ${member.idLong} in ${guild.idLong} should be banned... Checked due to: $checkedDueTo" }
@@ -240,7 +243,7 @@ class FloppaPower {
                                 ).queue()
 
                                 log(
-                                    guild.jda,
+                                    shardManager,
                                     "`[Report Selfbot IDs #${blockedUser.entry.id.value}/$checkedDueTo]` Usuário ${member.asMention} (`${member.idLong}`) foi banido em ${guild.name} (`${guild.idLong}`) por causa do ID (Cargos do usuário: ${member.roles.joinToString { it.name }})"
                                 )
 
@@ -252,13 +255,13 @@ class FloppaPower {
                                 }
                             } else {
                                 log(
-                                    guild.jda,
+                                    shardManager,
                                     "`[Report Avatar Hashes #${blockedUser.entry.id.value}/$checkedDueTo]` Usuário ${member.asMention} (`${member.idLong}`) seria banido em ${guild.name} (`${guild.idLong}`) por causa do ID... mas não consigo interagir com o usuário para banir! <a:floppaTeeth:849638419885195324> (Cargos do usuário: ${member.roles.joinToString { it.name }})"
                                 )
                             }
                         } else {
                             log(
-                                guild.jda,
+                                shardManager,
                                 "`[Report Selfbot IDs #${blockedUser.entry.id.value}/$checkedDueTo]` Usuário ${member.asMention} (`${member.idLong}`) seria banido em ${guild.name} (`${guild.idLong}`) por causa do ID... mas não tenho permissão para banir! <a:floppaTeeth:849638419885195324>"
                             )
                         }
@@ -283,7 +286,7 @@ class FloppaPower {
                                             .queue()
 
                                         log(
-                                            guild.jda,
+                                            shardManager,
                                             "`[Report Avatar Hashes #${blockedAvatarHash.entry.id.value}/$checkedDueTo]` Usuário ${member.asMention} (`${member.idLong}`) foi banido em ${guild.name} (`${guild.idLong}`) por causa do avatar ${blockedAvatarHash.id.value} (Cargos do usuário: ${member.roles.joinToString { it.name }})"
                                         )
 
@@ -295,13 +298,13 @@ class FloppaPower {
                                         }
                                     } else {
                                         log(
-                                            guild.jda,
+                                            shardManager,
                                             "`[Report Avatar Hashes #${blockedAvatarHash.entry.id.value}/$checkedDueTo]` Usuário ${member.asMention} (`${member.idLong}`) seria banido em ${guild.name} (`${guild.idLong}`) por causa do avatar ${blockedAvatarHash.id.value}... mas não consigo interagir com o usuário para banir! <a:floppaTeeth:849638419885195324> (Cargos do usuário: ${member.roles.joinToString { it.name }})"
                                         )
                                     }
                                 } else {
                                     log(
-                                        guild.jda,
+                                        shardManager,
                                         "`[Report Avatar Hashes #${blockedAvatarHash.entry.id.value}/$checkedDueTo]` Usuário ${member.asMention} (`${member.idLong}`) seria banido em ${guild.name} (`${guild.idLong}`) por causa do avatar ${blockedAvatarHash.id.value}... mas não tenho permissão para banir! <a:floppaTeeth:849638419885195324>"
                                     )
                                 }
@@ -316,11 +319,11 @@ class FloppaPower {
             }
         } catch (e: Exception) {
             logger.warn(e) { "Something went wrong while processing users to be banned" }
-            log(guild.jda, "Deu ruim!\n\n```\n${e.stackTraceToString()}\n```")
+            log(shardManager, "Deu ruim!\n\n```\n${e.stackTraceToString()}\n```")
         }
     }
 
-    suspend fun processIfGuildHasMembersThatShouldBeUnbanned(guild: Guild, checkedDueTo: CheckedDueToType) {
+    suspend fun processIfGuildHasMembersThatShouldBeUnbanned(shardManager: ShardManager, guild: Guild, checkedDueTo: CheckedDueToType) {
         // logger.info { "Checking if ${guild.idLong} has members that should be unbanned... Checked due to: $checkedDueTo" }
 
         try {
@@ -332,7 +335,7 @@ class FloppaPower {
                 }
 
                 log(
-                    guild.jda,
+                    shardManager,
                     "`[Unban Selfbot IDs/$checkedDueTo]` Existem ${blockedUsersThatShouldBeNotBlockedAnymore.size} usuários que estão banidos em ${guild.name} (`${guild.idLong}`) mas não deveriam estar!"
                 )
 
@@ -343,12 +346,12 @@ class FloppaPower {
                         guild.unban(it[BlockedUserBanEntries.user].toString()).queue()
 
                         log(
-                            guild.jda,
+                            shardManager,
                             "`[Unban Selfbot IDs/$checkedDueTo]` Usuário <@$userId> (`$userId`) foi desbanido em ${guild.name} (`${guild.idLong}`) pois a denúncia foi invalidada!"
                         )
                     } else {
                         log(
-                            guild.jda,
+                            shardManager,
                             "`[Unban Selfbot IDs/$checkedDueTo]` Usuário <@$userId> (`$userId`) seria desbanido em ${guild.name} (`${guild.idLong}`) pois a denúncia foi invalidada... mas não tenho permissão para banir! <a:floppaTeeth:849638419885195324>"
                         )
                     }
@@ -365,7 +368,7 @@ class FloppaPower {
                 }
 
                 log(
-                    guild.jda,
+                    shardManager,
                     "`[Unban Avatar Hashes/$checkedDueTo]` Existem ${blockedAvatarHashesThatShouldBeNotBlockedAnymore.size} usuários que estão banidos em ${guild.name} (`${guild.idLong}`) mas não deveriam estar!"
                 )
 
@@ -376,12 +379,12 @@ class FloppaPower {
                         guild.unban(it[BlockedAvatarHashesBanEntries.user].toString()).queue()
 
                         log(
-                            guild.jda,
+                            shardManager,
                             "`[Unban Avatar Hashes/$checkedDueTo]` Usuário <@$userId> (`$userId`) foi desbanido em ${guild.name} (`${guild.idLong}`) pois a denúncia foi invalidada!"
                         )
                     } else {
                         log(
-                            guild.jda,
+                            shardManager,
                             "`[Unban Avatar Hashes/$checkedDueTo]` Usuário <@$userId> (`$userId`) seria desbanido em ${guild.name} (`${guild.idLong}`) pois a denúncia foi invalidada... mas não tenho permissão para banir! <a:floppaTeeth:849638419885195324>"
                         )
                     }
@@ -393,17 +396,17 @@ class FloppaPower {
             }
         } catch (e: Throwable) {
             logger.warn(e) { "Something went wrong while processing users to be unbanned" }
-            log(guild.jda, "Deu ruim!\n\n```\n${e.stackTraceToString()}\n```")
+            log(shardManager, "Deu ruim!\n\n```\n${e.stackTraceToString()}\n```")
         }
     }
 
     /**
      * Updates the FloppaPower repository with the new changes
      */
-    suspend fun updateRepository(jda: JDA) {
+    suspend fun updateRepository(shardManager: ShardManager) {
         // TODO: Fix this, because we are running a Docker container idk how we could do this
         // Maybe by cloning it before starting the project?
-        log(jda, "Atualizando repositório...")
+        log(shardManager, "Atualizando repositório...")
 
         /* newSuspendedTransaction {
             val connection = (TransactionManager.current().connection.connection as HikariProxyConnection).unwrap(
@@ -425,7 +428,7 @@ class FloppaPower {
             .waitFor() */
     }
 
-    fun log(jda: JDA, text: String) {
+    fun log(shardManager: ShardManager, text: String) {
         queue.add(text)
     }
 

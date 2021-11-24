@@ -9,7 +9,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import mu.KotlinLogging
-import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.MessageBuilder
 import net.dv8tion.jda.api.entities.Emoji
 import net.dv8tion.jda.api.entities.Member
@@ -22,6 +21,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.components.Button
 import net.dv8tion.jda.api.interactions.components.ButtonStyle
+import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.FloppaPower
 import net.perfectdreams.floppapower.dao.MessageMetadata
 import net.perfectdreams.floppapower.dao.MultiEntryMetadata
@@ -39,7 +39,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import java.time.Instant
 
-class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
+class MessageListener(private val m: FloppaPower, private val shardManager: ShardManager) : ListenerAdapter() {
     companion object {
         private val GENERIC_ROLES = listOf(
             "Owner",
@@ -85,7 +85,7 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
                             .setAllowedMentions(listOf(Message.MentionType.ROLE)) // none. thank you, next
                             .build()
                     ).addFile(
-                        checkUserIdsInLines(event.jda, data)
+                        checkUserIdsInLines(shardManager, data)
                             .toMutableList()
                             .apply {
                                 this.add(0, "")
@@ -128,7 +128,7 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
                             .setAllowedMentions(listOf(Message.MentionType.ROLE)) // only role mentions
                             .build()
                     ).addFile(
-                        checkAvatarHashesInLines(event.jda, validatedData)
+                        checkAvatarHashesInLines(shardManager, validatedData)
                             .toMutableList()
                             .apply {
                                 this.add(0, "")
@@ -208,13 +208,13 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
         return validatedData.distinct()
     }
 
-    private suspend fun checkUserIdsInLines(jda: JDA, data: List<Long>): List<String> {
+    private suspend fun checkUserIdsInLines(shardManager: ShardManager, data: List<Long>): List<String> {
         val newLines = mutableListOf<String>()
         var idx = 0
         val retrievedUsers = data.map {
             it to try {
                 logger.info { "Querying $it... Current IDs checked: $idx/${data.size}" }
-                jda.retrieveUserById(it, false).await()
+                shardManager.retrieveUserById(it).await()
             } catch (e: ErrorResponseException) {
                 null
             }.also {
@@ -227,7 +227,7 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
 
         for ((userId, user) in retrievedUsers.sortedByDescending { it.second?.flags?.size ?: 0 }) {
             if (user != null) {
-                val (lines, attentionMembersX) = generateUserInfoLines(jda, user)
+                val (lines, attentionMembersX) = generateUserInfoLines(shardManager, user)
                 newLines.addAll(lines)
                 attentionUsers.addAll(attentionMembersX.map { it.user }.distinct())
                 newLines.add(userId.toString())
@@ -236,7 +236,7 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
         }
 
         if (attentionUsers.isNotEmpty()) {
-            newLines.addAll(0, generateAttentionLines(jda, attentionUsers))
+            newLines.addAll(0, generateAttentionLines(shardManager, attentionUsers))
         }
 
         for ((userId, user) in retrievedUsers.filter { it.second == null }) {
@@ -246,17 +246,17 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
         return newLines
     }
 
-    private suspend fun checkAvatarHashesInLines(jda: JDA, data: List<String>): List<String> {
+    private suspend fun checkAvatarHashesInLines(shardManager: ShardManager, data: List<String>): List<String> {
         val newLines = mutableListOf<String>()
         val attentionUsers = mutableListOf<User>()
 
         for (id in data) {
-            val users = jda.userCache.filter { it.avatarId == id }
+            val users = shardManager.userCache.filter { it.avatarId == id }
                 .sortedByDescending { it.flags.size }
 
             // Show the user name, if possible
             users.forEach {
-                val (lines, attentionMembersX) = generateUserInfoLines(jda, it)
+                val (lines, attentionMembersX) = generateUserInfoLines(shardManager, it)
                 newLines.addAll(lines)
                 attentionUsers.addAll(attentionMembersX.map { it.user }.distinct())
             }
@@ -266,19 +266,19 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
         }
 
         if (attentionUsers.isNotEmpty()) {
-            newLines.addAll(0, generateAttentionLines(jda, attentionUsers))
+            newLines.addAll(0, generateAttentionLines(shardManager, attentionUsers))
         }
 
         return newLines
     }
 
-    private fun generateUserInfoLines(jda: JDA, user: User): Pair<List<String>, List<Member>> {
+    private fun generateUserInfoLines(shardManager: ShardManager, user: User): Pair<List<String>, List<Member>> {
         // Show the user name, if possible
         val newLines = mutableListOf<String>()
         val attentionMembers = mutableListOf<Member>()
         newLines.add("# \uD83D\uDE10 ${user.name}#${user.discriminator} (${user.idLong}) [${Constants.DATE_FORMATTER.format(user.timeCreated)}]")
         newLines.add("# ┗ \uD83D\uDD16️ Flags: ${user.flags.joinToString(", ")}")
-        val mutualGuilds = jda.getMutualGuilds(user)
+        val mutualGuilds = shardManager.getMutualGuilds(user)
 
         if (mutualGuilds.isNotEmpty()) {
             newLines.add("# ┗ \uD83C\uDFE0 Servidores:")
@@ -294,12 +294,12 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
         return Pair(newLines, attentionMembers)
     }
 
-    private fun generateAttentionLines(jda: JDA, attentionUsers: List<User>): MutableList<String> {
+    private fun generateAttentionLines(shardManager: ShardManager, attentionUsers: List<User>): MutableList<String> {
         val veryImportantStuff = mutableListOf<String>()
         veryImportantStuff.add("# \uD83D\uDEA8 ATENÇÃO!!! OS SEGUINTES USUÁRIOS SÃO DA EQUIPE DE OUTROS SERVIDORES!!! ANALISE MUITO BEM ANTES DE ACEITAR!!")
 
         for (attentionUser in attentionUsers) {
-            val (lines, attentionMembersX) = generateUserInfoLines(jda, attentionUser)
+            val (lines, attentionMembersX) = generateUserInfoLines(shardManager, attentionUser)
             veryImportantStuff.addAll(lines)
             veryImportantStuff.add("")
         }
@@ -417,7 +417,7 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
             logger.info { "Finished check for ${event.user.idLong} about $metadataId! Should check? $shouldCheck" }
 
             if (shouldCheck.first) {
-                m.updateRepository(event.jda)
+                m.updateRepository(shardManager)
 
                 val fileLines = withContext(Dispatchers.IO) {
                     message.attachments.first().retrieveInputStream().get().readAllBytes().toString(Charsets.UTF_8)
@@ -432,12 +432,13 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
                     MetadataEntryType.SELFBOT_ID -> {
                         val userIds = fileLines.map { it.toLong() }
 
-                        event.jda.guildCache.forEach { guild ->
+                        shardManager.guildCache.forEach { guild ->
                             logger.info { "Checking ${guild}... Members: ${guild.memberCache.size()}" }
                             guild.memberCache.forEach {
                                 if (it.user.idLong in userIds) {
                                     logger.info { "Checking..." }
                                     m.processIfMemberShouldBeBanned(
+                                        shardManager,
                                         guild,
                                         it,
                                         CheckedDueToType.ALREADY_IN_THE_SERVER
@@ -447,12 +448,13 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
                         }
                     }
                     MetadataEntryType.AVATAR_HASHES -> {
-                        event.jda.guildCache.forEach { guild ->
+                        shardManager.guildCache.forEach { guild ->
                             logger.info { "Checking ${guild}... Members: ${guild.memberCache.size()}" }
                             guild.memberCache.forEach {
                                 if (it.user.avatarId in fileLines) {
                                     logger.info { "Checking..." }
                                     m.processIfMemberShouldBeBanned(
+                                        shardManager,
                                         guild,
                                         it,
                                         CheckedDueToType.ALREADY_IN_THE_SERVER
@@ -462,8 +464,8 @@ class MessageListener(private val m: FloppaPower) : ListenerAdapter() {
                         }
                     }
                     MetadataEntryType.DELETE_SELFBOT_ID, MetadataEntryType.DELETE_AVATAR_HASHES -> {
-                        event.jda.guildCache.forEach { guild ->
-                            m.processIfGuildHasMembersThatShouldBeUnbanned(guild, CheckedDueToType.ALREADY_IN_THE_SERVER)
+                        shardManager.guildCache.forEach { guild ->
+                            m.processIfGuildHasMembersThatShouldBeUnbanned(shardManager, guild, CheckedDueToType.ALREADY_IN_THE_SERVER)
                         }
                     }
                     else -> {

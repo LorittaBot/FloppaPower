@@ -1,25 +1,24 @@
 package net.perfectdreams.floppapower.commands.impl
 
 import net.dv8tion.jda.api.EmbedBuilder
-import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
-import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.components.Button
 import net.dv8tion.jda.api.interactions.components.ButtonStyle
+import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.FloppaPower
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
 import net.perfectdreams.floppapower.utils.Constants
 import net.perfectdreams.floppapower.utils.FloppaButton
 
-class CheckSimilarAvatarsCommand(private val m: FloppaPower) : AbstractSlashCommand("checksimilaravatars") {
+class CheckSimilarAvatarsCommand(private val m: FloppaPower, private val shardManager: ShardManager) : AbstractSlashCommand("checksimilaravatars") {
     override fun execute(event: SlashCommandEvent) {
         val pageId = (event.getOption("page")?.asString?.toInt() ?: 1).coerceAtLeast(1)
 
         val reply = event.deferReply()
 
-        reply.addEmbeds(buildAvatarMessages(event.jda, pageId))
+        reply.addEmbeds(buildAvatarMessages(shardManager, pageId))
         reply.addActionRow(*buildActionRow(pageId, event.user.idLong).toTypedArray())
         reply.queue()
     }
@@ -37,7 +36,7 @@ class CheckSimilarAvatarsCommand(private val m: FloppaPower) : AbstractSlashComm
                 it.invalidate()
 
                 it.event.deferEdit()
-                    .setEmbeds(buildAvatarMessages(it.event.jda, page + 1))
+                    .setEmbeds(buildAvatarMessages(shardManager, page + 1))
                     .setActionRow(buildActionRow(page + 1, userId))
                     .queue()
             }
@@ -56,7 +55,7 @@ class CheckSimilarAvatarsCommand(private val m: FloppaPower) : AbstractSlashComm
                     it.invalidate()
 
                     it.event.deferEdit()
-                        .setEmbeds(buildAvatarMessages(it.event.jda, page - 1))
+                        .setEmbeds(buildAvatarMessages(shardManager, page - 1))
                         .setActionRow(buildActionRow(page - 1, userId))
                         .queue()
                 }
@@ -65,14 +64,14 @@ class CheckSimilarAvatarsCommand(private val m: FloppaPower) : AbstractSlashComm
         return actionRows
     }
 
-    private fun buildAvatarMessages(jda: JDA, page: Int): List<MessageEmbed> {
+    private fun buildAvatarMessages(shardManager: ShardManager, page: Int): List<MessageEmbed> {
         val drop = (page - 1) * 5
 
         val currentUsedEmojis = Constants.emojis.toMutableList()
         val guildToEmoji = mutableMapOf<Guild, String>()
 
         val embeds = mutableListOf<MessageEmbed>()
-        jda.userCache.groupBy { it.avatarId }
+        shardManager.userCache.groupBy { it.avatarId }
             .filter { it.key != null }
             .entries
             .sortedByDescending { it.value.size }
@@ -85,7 +84,7 @@ class CheckSimilarAvatarsCommand(private val m: FloppaPower) : AbstractSlashComm
 
                 val serverListText = buildString {
                     val userAndGuildsSorted = it.value.map {
-                        it to jda.getMutualGuilds(
+                        it to shardManager.getMutualGuilds(
                             it
                         )
                         // negative because we want to sort descending

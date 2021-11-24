@@ -1,25 +1,21 @@
 package net.perfectdreams.floppapower.commands.impl
 
 import net.dv8tion.jda.api.EmbedBuilder
-import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
-import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.components.Button
 import net.dv8tion.jda.api.interactions.components.ButtonStyle
-import net.dv8tion.jda.api.interactions.components.Component
+import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.FloppaPower
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
 import net.perfectdreams.floppapower.utils.Constants
 import net.perfectdreams.floppapower.utils.FloppaButton
-import java.time.Instant
-import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
 
-class SusJoinsCommand(private val m: FloppaPower) : AbstractSlashCommand("susjoins") {
+class SusJoinsCommand(private val m: FloppaPower, private val shardManager: ShardManager) : AbstractSlashCommand("susjoins") {
     override fun execute(event: SlashCommandEvent) {
         val diffBetweenJoinTimes = event.getOption("time")?.asString?.toLong() ?: error("Missing time!")
         val creationTimeDayFilter = event.getOption("creation_time_filter")?.asString?.toLong() ?: error("Missing time!")
@@ -27,7 +23,7 @@ class SusJoinsCommand(private val m: FloppaPower) : AbstractSlashCommand("susjoi
 
         event.deferReply()
             .queue {
-                it.editOriginalEmbeds(buildAvatarMessages(event.jda, diffBetweenJoinTimes, creationTimeDayFilter,1))
+                it.editOriginalEmbeds(buildAvatarMessages(shardManager, diffBetweenJoinTimes, creationTimeDayFilter,1))
                     .setActionRow(*buildActionRow(1, diffBetweenJoinTimes, creationTimeDayFilter, event.user.idLong).toTypedArray())
                     .queue()
             }
@@ -47,7 +43,7 @@ class SusJoinsCommand(private val m: FloppaPower) : AbstractSlashCommand("susjoi
 
                 it.event.deferEdit()
                     .queue {
-                        it.editOriginalEmbeds(buildAvatarMessages(it.jda, diffBetweenJoinTimes, creationTimeDayFilter, page + 1))
+                        it.editOriginalEmbeds(buildAvatarMessages(shardManager, diffBetweenJoinTimes, creationTimeDayFilter, page + 1))
                             .setActionRow(buildActionRow(page + 1, diffBetweenJoinTimes, creationTimeDayFilter, userId))
                             .queue()
                     }
@@ -68,7 +64,7 @@ class SusJoinsCommand(private val m: FloppaPower) : AbstractSlashCommand("susjoi
 
                     it.event.deferEdit()
                         .queue {
-                            it.editOriginalEmbeds(buildAvatarMessages(it.jda, diffBetweenJoinTimes, creationTimeDayFilter, page - 1))
+                            it.editOriginalEmbeds(buildAvatarMessages(shardManager, diffBetweenJoinTimes, creationTimeDayFilter, page - 1))
                                 .setActionRow(buildActionRow(page - 1, diffBetweenJoinTimes, creationTimeDayFilter, userId))
                                 .queue()
                         }
@@ -78,14 +74,14 @@ class SusJoinsCommand(private val m: FloppaPower) : AbstractSlashCommand("susjoi
         return actionRows
     }
 
-    private fun buildAvatarMessages(jda: JDA, diffBetweenJoinTimes: Long, creationTimeDayFilter: Long, page: Int): List<MessageEmbed> {
+    private fun buildAvatarMessages(shardManager: ShardManager, diffBetweenJoinTimes: Long, creationTimeDayFilter: Long, page: Int): List<MessageEmbed> {
         val susUsers = mutableListOf<Pair<User, List<Pair<Guild, OffsetDateTime>>>>()
 
         val now = OffsetDateTime.now(ZoneId.of("America/Sao_Paulo"))
             .minusDays(creationTimeDayFilter)
 
-        jda.userCache.filter { !it.isBot }.filter { it.timeCreated.isAfter(now) }.forEach {
-            val mutualGuilds = jda.getMutualGuilds(it)
+        shardManager.userCache.filter { !it.isBot }.filter { it.timeCreated.isAfter(now) }.forEach {
+            val mutualGuilds = shardManager.getMutualGuilds(it)
 
             if (mutualGuilds.size > 2) {
                 val timeJoineds = mutualGuilds.map { guild ->
@@ -118,7 +114,7 @@ class SusJoinsCommand(private val m: FloppaPower) : AbstractSlashCommand("susjoi
             .drop(drop)
             .take(10)
             .forEach {
-                val mutualGuilds = jda.getMutualGuilds(it.first)
+                val mutualGuilds = shardManager.getMutualGuilds(it.first)
                 val guildsWhereTheSusLiesWithin = it.second.map { it.first }
                 embeds.add(
                     EmbedBuilder()

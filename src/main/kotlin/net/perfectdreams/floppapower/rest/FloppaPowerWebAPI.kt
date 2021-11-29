@@ -38,7 +38,7 @@ class FloppaPowerWebAPI(val floppaPower: FloppaPower, val shardManager: ShardMan
                             BlockedUsers.select {
                                 BlockedUsers.valid eq true
                             }.map {
-                                it[BlockedUsers.userId].value
+                                it[BlockedUsers.userId].value.toString()
                             }
                         }
                     }

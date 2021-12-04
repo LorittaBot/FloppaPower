@@ -78,7 +78,13 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
 
         hook.editOriginal("**Todos os $userCacheSize usuários foram verificados! (${userWithMutualGuilds.size} válidos baseado no filtro)** <a:SCfloppaEARflop2:750859905858142258>\nResultado apenas possui os top $MAX_USERS_PER_LIST usuários, ignorando bots e usuários que estão na EPF!")
             .retainFiles(listOf()) // Remove all files from the message
-            .addFile(generateTopUsersMutualGuildsLines().joinToString("\n").toByteArray(Charsets.UTF_8), "users.txt")
+            .addFile(
+                generateTopUsersMutualGuildsLines()
+                    .joinToString("\n")
+                    .take(8_000) // Discord's file size limit, let's ignore everything after 8000 characters (8MB)
+                    .toByteArray(Charsets.UTF_8),
+                "users.txt"
+            )
             .queue()
     }
 

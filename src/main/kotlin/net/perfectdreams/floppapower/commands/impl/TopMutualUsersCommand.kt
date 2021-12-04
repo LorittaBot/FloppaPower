@@ -35,8 +35,9 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
         var idx = 0
         val userCacheSize = shardManager.userCache.size()
         shardManager.userCache.forEach {
-            if (idx % 1_000 == 0 && idx != 0)
+            if (idx % 50_000 == 0 && idx != 0)
                 hook.editOriginal("**Usuários verificados:** $idx/$userCacheSize <a:floppaTeeth:849638419885195324>\nResultado apenas possui os top 1000 usuários!")
+                    .retainFiles(listOf()) // Remove all files from the message
                     .addFile(generateTopUsersMutualGuildsLines().joinToString("\n").toByteArray(Charsets.UTF_8), "users.txt")
                     .queue()
 
@@ -45,6 +46,7 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
         }
 
         hook.editOriginal("**Todos os $userCacheSize usuários foram verificados!** <a:SCfloppaEARflop2:750859905858142258>\nResultado apenas possui os top 1000 usuários!")
+            .retainFiles(listOf()) // Remove all files from the message
             .addFile(generateTopUsersMutualGuildsLines().joinToString("\n").toByteArray(Charsets.UTF_8), "users.txt")
             .queue()
     }

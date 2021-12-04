@@ -59,7 +59,7 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
             } else { // alphabetically, needs to be exaustive
                 matchedUsers.sortedBy { it.name }
             }.forEach {
-                InfoGenerationUtils.generateUserInfoLines(shardManager, it, it.mutualGuilds).first.forEach {
+                InfoGenerationUtils.generateUserInfoLines(shardManager, it).first.forEach {
                     builder.append(it)
                     builder.append("\n")
                     builder.append("\n")

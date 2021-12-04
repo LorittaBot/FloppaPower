@@ -45,7 +45,7 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
                 )
                 .take(MAX_USERS_PER_LIST)
                 .forEach {
-                    lines.addAll(InfoGenerationUtils.generateUserInfoLines(shardManager, it.user, it.mutualGuilds).first)
+                    lines.addAll(InfoGenerationUtils.generateUserInfoLines(it.user, it.mutualGuilds).first)
                     lines.add("\n")
                 }
 
@@ -58,7 +58,7 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
         shardManager.userCache.forEach {
             // Ignore bots
             if (!it.isBot) {
-                val userMutualGuilds = it.mutualGuilds
+                val userMutualGuilds = shardManager.getMutualGuilds(it)
 
                 // Ignore accounts that are in less than or equal to 3 servers (to speed up our checks)
                 if (userMutualGuilds.size >= 3) {

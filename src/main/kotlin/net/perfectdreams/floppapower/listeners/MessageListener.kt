@@ -232,7 +232,7 @@ class MessageListener(private val m: FloppaPower, private val shardManager: Shar
 
         for ((userId, user) in retrievedUsers.sortedByDescending { it.second?.flags?.size ?: 0 }) {
             if (user != null) {
-                val (lines, attentionMembersX) = InfoGenerationUtils.generateUserInfoLines(shardManager, user, user.mutualGuilds)
+                val (lines, attentionMembersX) = InfoGenerationUtils.generateUserInfoLines(shardManager, user)
                 newLines.addAll(lines)
                 attentionUsers.addAll(attentionMembersX.map { it.user }.distinct())
                 newLines.add(userId.toString())

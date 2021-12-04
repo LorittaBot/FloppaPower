@@ -6,7 +6,9 @@ import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.sharding.ShardManager
 
 object InfoGenerationUtils {
-    fun generateUserInfoLines(shardManager: ShardManager, user: User, mutualGuilds: List<Guild>): Pair<List<String>, List<Member>> {
+    fun generateUserInfoLines(shardManager: ShardManager, user: User) = generateUserInfoLines(user, shardManager.getMutualGuilds(user))
+
+    fun generateUserInfoLines(user: User, mutualGuilds: List<Guild>): Pair<List<String>, List<Member>> {
         // Show the user name, if possible
         val newLines = mutableListOf<String>()
         val attentionMembers = mutableListOf<Member>()

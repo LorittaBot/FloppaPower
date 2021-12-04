@@ -20,27 +20,32 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
         event.deferReply().queue()
         val hook = event.hook // This is a special webhook that allows you to send messages without having permissions in the channel and also allows ephemeral messages
 
-        val mutualGuilds = mutableMapOf<User, List<Guild>>()
+        // Trying to avoid a humongous allocation due to array list resizes
+        // We are going to create a array list that has half of the size of the current user cache
+        // Due to the checks we are doing below, we *probably* won't need to resize this... I hope.
+        val userWithMutualGuilds = ArrayList<UserWithMutualGuilds>(
+            (shardManager.userCache.size() / 2).toInt()
+        )
 
         fun generateTopUsersMutualGuildsLines(): MutableList<String> {
             val lines = mutableListOf("Users:")
 
-            mutualGuilds
+            userWithMutualGuilds
                 .asSequence()
                 .sortedWith(
                     compareBy(
                         {
                             // negative because we want it to be descending
-                            -it.value.size
+                            -it.mutualGuilds.size
                         },
                         {
-                            it.key.timeCreated
+                            it.user.timeCreated
                         }
                     )
                 )
                 .take(MAX_USERS_PER_LIST)
                 .forEach {
-                    lines.addAll(generateUserInfoLines(shardManager, it.key, it.value).first)
+                    lines.addAll(generateUserInfoLines(shardManager, it.user, it.mutualGuilds).first)
                 }
 
             return lines
@@ -58,14 +63,19 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
                 if (userMutualGuilds.size >= 3) {
                     // Ignore users that are in the EPF guild
                     if (!userMutualGuilds.any { it.idLong == Constants.ELITE_PENGUIN_FORCE_GUILD_ID })
-                        mutualGuilds[it] = userMutualGuilds
+                        userWithMutualGuilds.add(
+                            UserWithMutualGuilds(
+                                it,
+                                userMutualGuilds
+                            )
+                        )
                 }
             }
 
             idx++
         }
 
-        hook.editOriginal("**Todos os $userCacheSize usuários foram verificados!** <a:SCfloppaEARflop2:750859905858142258>\nResultado apenas possui os top $MAX_USERS_PER_LIST usuários, ignorando bots e usuários que estão na EPF!")
+        hook.editOriginal("**Todos os $userCacheSize usuários foram verificados! (${userWithMutualGuilds.size} válidos baseado no filtro)** <a:SCfloppaEARflop2:750859905858142258>\nResultado apenas possui os top $MAX_USERS_PER_LIST usuários, ignorando bots e usuários que estão na EPF!")
             .retainFiles(listOf()) // Remove all files from the message
             .addFile(generateTopUsersMutualGuildsLines().joinToString("\n").toByteArray(Charsets.UTF_8), "users.txt")
             .queue()
@@ -93,4 +103,9 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
         // newLines.add(user.idLong.toString())
         return Pair(newLines, attentionMembers)
     }
+
+    data class UserWithMutualGuilds(
+        val user: User,
+        val mutualGuilds: List<Guild>
+    )
 }

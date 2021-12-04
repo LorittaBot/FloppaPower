@@ -10,6 +10,12 @@ import net.perfectdreams.floppapower.utils.Constants
 
 
 class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSlashCommand("topmutualusers") {
+    companion object {
+        // 1000 users is around 493 KB
+        // so let's to 15_000 users!
+        const val MAX_USERS_PER_LIST = 15_000
+    }
+
     override fun execute(event: SlashCommandEvent) {
         event.deferReply().queue()
         val hook = event.hook // This is a special webhook that allows you to send messages without having permissions in the channel and also allows ephemeral messages
@@ -23,7 +29,7 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
                 .sortedByDescending {
                     it.second.size
                 }
-                .take(1000)
+                .take(MAX_USERS_PER_LIST)
                 .forEach {
                     lines.addAll(generateUserInfoLines(shardManager, it.first, it.second).first)
                 }
@@ -35,17 +41,19 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
         var idx = 0
         val userCacheSize = shardManager.userCache.size()
         shardManager.userCache.forEach {
-            if (idx % 50_000 == 0 && idx != 0)
-                hook.editOriginal("**Usuários verificados:** $idx/$userCacheSize <a:floppaTeeth:849638419885195324>\nResultado apenas possui os top 1000 usuários!")
+            if (idx % 250_000 == 0 && idx != 0)
+                hook.editOriginal("**Usuários verificados:** $idx/$userCacheSize <a:floppaTeeth:849638419885195324>\nResultado apenas possui os top $MAX_USERS_PER_LIST usuários como também ignora bots!")
                     .retainFiles(listOf()) // Remove all files from the message
                     .addFile(generateTopUsersMutualGuildsLines().joinToString("\n").toByteArray(Charsets.UTF_8), "users.txt")
                     .queue()
 
-            mutualGuilds[it] = it.mutualGuilds
+            // Ignore bots
+            if (!it.isBot)
+                mutualGuilds[it] = it.mutualGuilds
             idx++
         }
 
-        hook.editOriginal("**Todos os $userCacheSize usuários foram verificados!** <a:SCfloppaEARflop2:750859905858142258>\nResultado apenas possui os top 1000 usuários!")
+        hook.editOriginal("**Todos os $userCacheSize usuários foram verificados!** <a:SCfloppaEARflop2:750859905858142258>\nResultado apenas possui os top $MAX_USERS_PER_LIST usuários como também ignora bots!")
             .retainFiles(listOf()) // Remove all files from the message
             .addFile(generateTopUsersMutualGuildsLines().joinToString("\n").toByteArray(Charsets.UTF_8), "users.txt")
             .queue()

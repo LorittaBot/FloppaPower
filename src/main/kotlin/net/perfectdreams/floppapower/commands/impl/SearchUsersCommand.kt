@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
 
 
-class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlashCommand("guilds") {
+class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlashCommand("searchusers") {
     override fun execute(event: SlashCommandEvent) {
         event.deferReply().queue()
         val hook = event.hook // This is a special webhook that allows you to send messages without having permissions in the channel and also allows ephemeral messages

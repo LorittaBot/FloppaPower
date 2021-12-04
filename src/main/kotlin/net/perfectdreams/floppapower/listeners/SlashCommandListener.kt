@@ -18,8 +18,10 @@ import net.perfectdreams.floppapower.commands.impl.CheckSimilarAvatarsCommand
 import net.perfectdreams.floppapower.commands.impl.GuildsCommand
 import net.perfectdreams.floppapower.commands.impl.SameAvatarHashCommand
 import net.perfectdreams.floppapower.commands.impl.SameAvatarUserCommand
+import net.perfectdreams.floppapower.commands.impl.SearchUsersCommand
 import net.perfectdreams.floppapower.commands.impl.SharedGuildsCommand
 import net.perfectdreams.floppapower.commands.impl.SusJoinsCommand
+import net.perfectdreams.floppapower.commands.impl.TopMutualUsersCommand
 import net.perfectdreams.floppapower.utils.Constants
 import net.perfectdreams.floppapower.utils.FloppaButtonClickEvent
 import java.util.*
@@ -39,7 +41,9 @@ class SlashCommandListener(private val m: FloppaPower, private val shardManager:
         CheckSimilarAvatarsCommand(m, shardManager),
         SameAvatarHashCommand(m, shardManager),
         SameAvatarUserCommand(m, shardManager),
-        SusJoinsCommand(m, shardManager)
+        SusJoinsCommand(m, shardManager),
+        SearchUsersCommand(shardManager),
+        TopMutualUsersCommand(shardManager)
     )
 
     override fun onGuildReady(event: GuildReadyEvent) {

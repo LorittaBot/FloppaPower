@@ -25,7 +25,8 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
         fun generateTopUsersMutualGuildsLines(): MutableList<String> {
             val lines = mutableListOf("Users:")
 
-            mutualGuilds.toList()
+            mutualGuilds
+                .toList()
                 .sortedWith(
                     compareBy(
                         {
@@ -58,9 +59,13 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
             // Ignore bots
             if (!it.isBot) {
                 val userMutualGuilds = it.mutualGuilds
-                // Ignore users that are in the EPF guild
-                if (!userMutualGuilds.any { it.idLong == Constants.ELITE_PENGUIN_FORCE_GUILD_ID })
-                    mutualGuilds[it] = userMutualGuilds
+
+                // Ignore accounts that are in less than or equal to 3 servers (to speed up our checks)
+                if (userMutualGuilds.size >= 3) {
+                    // Ignore users that are in the EPF guild
+                    if (!userMutualGuilds.any { it.idLong == Constants.ELITE_PENGUIN_FORCE_GUILD_ID })
+                        mutualGuilds[it] = userMutualGuilds
+                }
             }
 
             idx++

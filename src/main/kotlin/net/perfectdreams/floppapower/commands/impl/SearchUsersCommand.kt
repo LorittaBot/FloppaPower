@@ -6,6 +6,8 @@ import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
 import net.perfectdreams.floppapower.utils.Constants
 import net.perfectdreams.floppapower.utils.InfoGenerationUtils
+import java.time.OffsetDateTime
+import java.time.ZoneId
 
 
 class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlashCommand("searchusers") {
@@ -25,6 +27,11 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
         val sortBy = (event.getOption("sort_by")?.asString  ?: "creation_date")// This is the sort that the user wants to use
 
         val list = (event.getOption("list")?.asString?.toBoolean() ?: false) // Will create only the list with the users name and id
+
+        val creationTimeDayFilter = (event.getOption("creation_time_filter")?.asString?.toLong() ?: "36500".toLong())
+
+        val now = OffsetDateTime.now(ZoneId.of("America/Sao_Paulo"))
+            .minusDays(creationTimeDayFilter)
 
         val matchedUsers = mutableListOf<User>()
         var tooManyUsers = false
@@ -46,18 +53,24 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
         if (list) {
             if (sortBy == "creation_date") {
                 matchedUsers.sortedByDescending { it.timeCreated }
-            } else { // alphabetically
+            } else if (sortBy == "alphabetically") { // alphabetically, needs to be exaustive
                 matchedUsers.sortedBy { it.name }
-            }.forEach {
+            } else {
+                matchedUsers.sortedByDescending { it.mutualGuilds.size }
+            }.filter { it.timeCreated.isAfter(now) }
+                .forEach {
                 builder.append("${it.name}#${it.discriminator} (${it.idLong}) - [${Constants.DATE_FORMATTER.format(it.timeCreated)}]")
                 builder.append("\n")
             }
         } else {
             if (sortBy == "creation_date") {
                 matchedUsers.sortedByDescending { it.timeCreated }
-            } else { // alphabetically, needs to be exaustive
+            } else if (sortBy == "alphabetically") { // alphabetically, needs to be exaustive
                 matchedUsers.sortedBy { it.name }
-            }.forEach {
+            } else {
+                matchedUsers.sortedByDescending { it.mutualGuilds.size }
+            }.filter { it.timeCreated.isAfter(now) }
+                .forEach {
                 InfoGenerationUtils.generateUserInfoLines(shardManager, it).first.forEach {
                     builder.append(it)
                     builder.append("\n")

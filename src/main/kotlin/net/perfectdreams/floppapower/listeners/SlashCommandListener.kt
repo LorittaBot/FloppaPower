@@ -94,7 +94,20 @@ class SlashCommandListener(private val m: FloppaPower, private val shardManager:
                     OptionData(OptionType.STRING, "sort_by", "O que você quer ordenar os usuários por", false)
                         .addChoice("Nome", "alphabetically")
                         .addChoice("Criação", "creation_date")
+                        .addChoice("Mutual Guilds", "mutual_guilds")
+
                     )
+                .addOptions(
+                    OptionData(OptionType.STRING, "creation_time_filter", "Filtrar usuários que criaram a conta recentemente, acelera a pesquisa de usuários", false)
+                        .addChoice("3 dias", "3")
+                        .addChoice("7 dias", "7")
+                        .addChoice("14 dias", "14")
+                        .addChoice("30 dias", "30")
+                        .addChoice("90 dias", "90")
+                        .addChoice("180 dias", "180")
+                        .addChoice("365 dias", "365")
+                        .addChoice("Gosto de ver pegando fogo!", "36500")
+                )
         ).queue()
 
         guild.upsertCommand(

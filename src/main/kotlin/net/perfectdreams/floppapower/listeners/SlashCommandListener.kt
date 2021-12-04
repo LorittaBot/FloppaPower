@@ -25,6 +25,7 @@ import net.perfectdreams.floppapower.commands.impl.TopMutualUsersCommand
 import net.perfectdreams.floppapower.utils.Constants
 import net.perfectdreams.floppapower.utils.FloppaButtonClickEvent
 import java.util.*
+import kotlin.concurrent.thread
 
 class SlashCommandListener(private val m: FloppaPower, private val shardManager: ShardManager) : ListenerAdapter() {
     companion object {
@@ -128,13 +129,15 @@ class SlashCommandListener(private val m: FloppaPower, private val shardManager:
     }
 
     override fun onSlashCommand(event: SlashCommandEvent) {
-        logger.info { "Received Slash Command ${event.name} from ${event.user}" }
+        m.executor.execute {
+            logger.info { "Received Slash Command ${event.name} from ${event.user}" }
 
-        val command = commands.firstOrNull { it.commandPath == event.commandPath }
+            val command = commands.firstOrNull { it.commandPath == event.commandPath }
 
-        if (command != null) {
-            command.execute(event)
-            return
+            if (command != null) {
+                command.execute(event)
+                return@execute
+            }
         }
     }
 

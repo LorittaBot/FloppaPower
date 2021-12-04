@@ -55,6 +55,7 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Executors
 import kotlin.concurrent.thread
 import kotlin.system.exitProcess
 
@@ -82,6 +83,7 @@ class FloppaPower {
     // Store button interactions cache
     // Only used for commands!
     val slashCommandButtonInteractionCache = ConcurrentHashMap<UUID, (FloppaButtonClickEvent) -> (Unit)>()
+    val executor = Executors.newFixedThreadPool(4)
 
     fun start() {
         transaction(database) {

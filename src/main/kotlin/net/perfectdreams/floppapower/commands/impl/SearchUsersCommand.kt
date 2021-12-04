@@ -53,7 +53,6 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
                 builder.append("\n")
             }
         } else {
-
             if (sortBy == "creation_date") {
                 matchedUsers.sortedByDescending { it.timeCreated }
             } else { // alphabetically, needs to be exaustive

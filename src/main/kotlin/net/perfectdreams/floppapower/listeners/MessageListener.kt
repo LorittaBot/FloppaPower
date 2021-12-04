@@ -15,7 +15,7 @@ import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.interaction.ButtonClickEvent
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.exceptions.ErrorResponseException
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.components.ActionRow
@@ -50,7 +50,11 @@ class MessageListener(private val m: FloppaPower, private val shardManager: Shar
         private val mutex = Mutex()
     }
 
-    override fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
+    override fun onMessageReceived(event: MessageReceivedEvent) {
+        // We only care about guild messages
+        if (!event.isFromGuild)
+            return
+
         if (event.message.channel.idLong != Constants.REPORT_CHANNEL_ID)
             return
 

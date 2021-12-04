@@ -17,7 +17,7 @@ object Constants {
         Permission.BAN_MEMBERS,
         Permission.KICK_MEMBERS,
         Permission.MANAGE_CHANNEL,
-        Permission.MANAGE_EMOTES,
+        Permission.MANAGE_EMOTES_AND_STICKERS,
         Permission.MANAGE_PERMISSIONS,
         Permission.MANAGE_ROLES,
         Permission.MANAGE_SERVER

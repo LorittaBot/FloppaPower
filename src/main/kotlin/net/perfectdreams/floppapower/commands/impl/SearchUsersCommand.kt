@@ -41,38 +41,30 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
 
         val builder = StringBuilder("Users (${matchedUsers.size}):")
         builder.append("\n")
+
         if (list) {
             if (sortBy == "creation_date") {
-                matchedUsers.sortedByDescending { it.creationTime }.forEach {
-                    builder.append("${it.name}#${it.discriminator} (${it.idLong}) - [${Constants.DATE_FORMATTER.format(it.timeCreated)}]")
-                    builder.append("\n")
+                matchedUsers.sortedByDescending { it.creationTime }
             } else if (sortBy == "alphabetically") {
-                matchedUsers.sortBy { it.name }.forEach {
-                    builder.append("${it.name}#${it.discriminator} (${it.idLong}) - [${Constants.DATE_FORMATTER.format(it.timeCreated)}]")
-                    builder.append("\n")
+                matchedUsers.sortBy { it.name }
+            }.forEach {
+                builder.append("${it.name}#${it.discriminator} (${it.idLong}) - [${Constants.DATE_FORMATTER.format(it.timeCreated)}]")
+                builder.append("\n")
             }
         } else {
+
             if (sortBy == "creation_date") {
-            matchedUsers.sortedByDescending { it.creationTime }.forEach {
-            InfoGenerationUtils.generateUserInfoLines(shardManager, it, it.mutualGuilds).first.forEach {
-                builder.append(it)
-                builder.append("\n")
-                builder.append("\n")
-                   }
-                }
+                matchedUsers.sortedByDescending { it.creationTime }
             } else if (sortBy == "alphabetically") {
-                matchedUsers.sortBy { it.name }.forEach {
-                    InfoGenerationUtils.generateUserInfoLines(shardManager, it, it.mutualGuilds).first.forEach {
-                        builder.append(it)
-                        builder.append("\n")
-                        builder.append("\n")
-                    }
+                matchedUsers.sortBy { it.name }
+            }.forEach {
+                InfoGenerationUtils.generateUserInfoLines(shardManager, it, it.mutualGuilds).first.forEach {
+                    builder.append(it)
+                    builder.append("\n")
+                    builder.append("\n")
                 }
             }
-
         }
-    }
-}
 
         hook
             .editOriginal(if (tooManyUsers) "Tem tantos usuários que eu limitei a $MAX_USERS_PER_LIST usuários! <a:floppaTeeth:849638419885195324>" else "<a:SCfloppaEARflop2:750859905858142258>")

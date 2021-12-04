@@ -45,11 +45,11 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
                 // Current size + lines to be added + new line length
                 // If it is bigger than 8_000_000 (8MB), we are going to ignore it
                 // Needs to be in bytes because string length != length in UTF-8!
-                if (lines.map { it.toByteArray(Charsets.UTF_8) }.sumOf { it.size } + linesToBeAdded.map { it.toByteArray(Charsets.UTF_8) }.sumOf { it.size } + 1 > 8_000_000)
+                if (lines.map { it.toByteArray(Charsets.UTF_8) }.sumOf { it.size } + linesToBeAdded.map { it.toByteArray(Charsets.UTF_8) }.sumOf { it.size + 1 } > 8_000_000)
                     break
 
                 lines.addAll(linesToBeAdded)
-                lines.add("\n")
+                lines.add("")
 
                 successfullyAddedUsers++
             }

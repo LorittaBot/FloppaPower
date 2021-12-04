@@ -26,21 +26,21 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
             val lines = mutableListOf("Users:")
 
             mutualGuilds
-                .toList()
+                .asSequence()
                 .sortedWith(
                     compareBy(
                         {
                             // negative because we want it to be descending
-                            -it.second.size
+                            -it.value.size
                         },
                         {
-                            it.first.timeCreated
+                            it.key.timeCreated
                         }
                     )
                 )
                 .take(MAX_USERS_PER_LIST)
                 .forEach {
-                    lines.addAll(generateUserInfoLines(shardManager, it.first, it.second).first)
+                    lines.addAll(generateUserInfoLines(shardManager, it.key, it.value).first)
                 }
 
             return lines

@@ -43,6 +43,10 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
             mutualGuilds[it] = it.mutualGuilds
             idx++
         }
+
+        hook.editOriginal("**Todos os $userCacheSize usuários foram verificados!** <a:SCfloppaEARflop2:750859905858142258>\nResultado apenas possui os top 1000 usuários!")
+            .addFile(generateTopUsersMutualGuildsLines().joinToString("\n").toByteArray(Charsets.UTF_8), "users.txt")
+            .queue()
     }
 
     // Stolen from MessageListener, maybe we should refactor the code later...

@@ -49,11 +49,21 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
         // I don't think that this is a good idea because it will take a looong time I guess...
         var idx = 0
         val userCacheSize = shardManager.userCache.size()
+        var lastUpdatedListHashCode = 0
         shardManager.userCache.forEach {
             if (idx % 250_000 == 0 && idx != 0)
                 hook.editOriginal("**Usuários verificados:** $idx/$userCacheSize <a:floppaTeeth:849638419885195324>\nResultado apenas possui os top $MAX_USERS_PER_LIST usuários, ignorando bots e usuários que estão na EPF!")
-                    .retainFiles(listOf()) // Remove all files from the message
-                    .addFile(generateTopUsersMutualGuildsLines().joinToString("\n").toByteArray(Charsets.UTF_8), "users.txt")
+                    .also {
+                        val lines = generateTopUsersMutualGuildsLines()
+                        val currentHashCode = lines.hashCode()
+                        // We use this to avoid creating a ByteArray if the message is still exactly the same as before
+                        // This is not very optimal... maybe we should store the previous generated list users, because if they are the same... then we wouldn't need to change something.
+                        if (currentHashCode != lastUpdatedListHashCode) {
+                            it.retainFiles(listOf()) // Remove all files from the message
+                            it.addFile(generateTopUsersMutualGuildsLines().joinToString("\n").toByteArray(Charsets.UTF_8), "users.txt")
+                            lastUpdatedListHashCode = currentHashCode.hashCode()
+                        }
+                    }
                     .queue()
 
             // Ignore bots

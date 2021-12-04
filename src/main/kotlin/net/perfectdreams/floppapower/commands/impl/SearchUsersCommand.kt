@@ -18,8 +18,12 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
         event.deferReply().queue()
         val hook = event.hook // This is a special webhook that allows you to send messages without having permissions in the channel and also allows ephemeral messages
 
-        val regexPatternAsString = event.getOption("pattern")?.asString!!
+        val regexPatternAsString = event.getOption("pattern")?.asString!! // This is the pattern that the user wants to search for
         val regex = Regex(regexPatternAsString, RegexOption.IGNORE_CASE)
+
+        val sortBy = (event.getOption("sort_by")?.asString  ?: 'creation_date')// This is the sort that the user wants to use
+
+        val list = (event.getOption("list")?.asString?.toBoolean() ?: false) // Will create only the list with the users name and id
 
         val matchedUsers = mutableListOf<User>()
         var tooManyUsers = false
@@ -37,11 +41,28 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
 
         val builder = StringBuilder("Users (${matchedUsers.size}):")
         builder.append("\n")
-        matchedUsers.sortedBy { it.timeCreated }.forEach {
-            InfoGenerationUtils.generateUserInfoLines(shardManager, it, it.mutualGuilds).first.forEach {
-                builder.append(it)
+
+        if (list) {
+            if (sortBy == "creation_date") {
+                matchedUsers.sortedByDescending { it.creationTime }
+            } else if (sortBy == "alphabetically") {
+                matchedUsers.sortBy { it.name }
+            }.forEach {
+                builder.append("${it.name}#${it.discriminator} (${it.idLong}) - [${Constants.DATE_FORMATTER.format(it.timeCreated)}]")
                 builder.append("\n")
-                builder.append("\n")
+            }
+        } else {
+
+            if (sortBy == "creation_date") {
+                matchedUsers.sortedByDescending { it.creationTime }
+            } else if (sortBy == "alphabetically") {
+                matchedUsers.sortBy { it.name }
+            }.forEach {
+                InfoGenerationUtils.generateUserInfoLines(shardManager, it, it.mutualGuilds).first.forEach {
+                    builder.append(it)
+                    builder.append("\n")
+                    builder.append("\n")
+                }
             }
         }
 

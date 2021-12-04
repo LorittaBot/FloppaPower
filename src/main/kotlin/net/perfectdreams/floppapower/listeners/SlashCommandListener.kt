@@ -88,6 +88,12 @@ class SlashCommandListener(private val m: FloppaPower, private val shardManager:
         guild.upsertCommand(
             CommandData("searchusers", "Busca usuários usando um RegEx")
                 .addOption(OptionType.STRING, "pattern", "RegEx pattern do nome de usuário que você deseja procurar", true)
+                .addOption(OptionType.BOOLEAN, "list", "Gera uma lista sem os detalhes", false)
+                .addOptions(
+                    OptionData(OprionType.STRING, "sort_by", "O que você quer ordenar os usuários por", false)
+                        .addChoice("Nome", "alphabetically")
+                        .addChoice("Criação", "creation_date")
+                    )
         ).queue()
 
         guild.upsertCommand(

@@ -69,7 +69,7 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
 
         hook
             .editOriginal(if (tooManyUsers) "Tem tantos usuários que eu limitei a $MAX_USERS_PER_LIST usuários! <a:floppaTeeth:849638419885195324>" else "<a:SCfloppaEARflop2:750859905858142258>")
-            .addFile(builder.toString().take(8_000).toByteArray(Charsets.UTF_8), "users.txt")
+            .addFile(builder.toString().take(8_000_000).toByteArray(Charsets.UTF_8), "users.txt")
             .queue()
     }
 }

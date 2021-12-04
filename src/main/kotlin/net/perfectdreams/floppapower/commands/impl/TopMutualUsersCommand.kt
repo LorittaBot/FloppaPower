@@ -44,8 +44,8 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
                     val linesToBeAdded = InfoGenerationUtils.generateUserInfoLines(it.user, it.mutualGuilds).first
 
                     // Current size + lines to be added + new line length
-                    // If it is bigger than 8000, we are going to ignore it
-                    if (lines.sumOf { it.length } + linesToBeAdded.sumOf { it.length } + 1 > 8000)
+                    // If it is bigger than 8_000_000 (8MB), we are going to ignore it
+                    if (lines.sumOf { it.length } + linesToBeAdded.sumOf { it.length } + 1 > 8_000_000)
                         return@forEach
 
                     lines.addAll(linesToBeAdded)

@@ -46,6 +46,7 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
                 .take(MAX_USERS_PER_LIST)
                 .forEach {
                     lines.addAll(InfoGenerationUtils.generateUserInfoLines(shardManager, it.user, it.mutualGuilds).first)
+                    lines.add("\n")
                 }
 
             return lines

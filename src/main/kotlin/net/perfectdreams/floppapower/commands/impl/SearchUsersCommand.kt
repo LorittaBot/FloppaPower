@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
 import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
+import net.perfectdreams.floppapower.utils.Constants
 import net.perfectdreams.floppapower.utils.InfoGenerationUtils
 
 
@@ -21,7 +22,7 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
         val regexPatternAsString = event.getOption("pattern")?.asString!! // This is the pattern that the user wants to search for
         val regex = Regex(regexPatternAsString, RegexOption.IGNORE_CASE)
 
-        val sortBy = (event.getOption("sort_by")?.asString  ?: 'creation_date')// This is the sort that the user wants to use
+        val sortBy = (event.getOption("sort_by")?.asString  ?: "creation_date")// This is the sort that the user wants to use
 
         val list = (event.getOption("list")?.asString?.toBoolean() ?: false) // Will create only the list with the users name and id
 
@@ -44,9 +45,9 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
 
         if (list) {
             if (sortBy == "creation_date") {
-                matchedUsers.sortedByDescending { it.creationTime }
-            } else if (sortBy == "alphabetically") {
-                matchedUsers.sortBy { it.name }
+                matchedUsers.sortedByDescending { it.timeCreated }
+            } else { // alphabetically
+                matchedUsers.sortedBy { it.name }
             }.forEach {
                 builder.append("${it.name}#${it.discriminator} (${it.idLong}) - [${Constants.DATE_FORMATTER.format(it.timeCreated)}]")
                 builder.append("\n")
@@ -54,9 +55,9 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
         } else {
 
             if (sortBy == "creation_date") {
-                matchedUsers.sortedByDescending { it.creationTime }
-            } else if (sortBy == "alphabetically") {
-                matchedUsers.sortBy { it.name }
+                matchedUsers.sortedByDescending { it.timeCreated }
+            } else { // alphabetically, needs to be exaustive
+                matchedUsers.sortedBy { it.name }
             }.forEach {
                 InfoGenerationUtils.generateUserInfoLines(shardManager, it, it.mutualGuilds).first.forEach {
                     builder.append(it)

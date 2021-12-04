@@ -62,8 +62,8 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
                 InfoGenerationUtils.generateUserInfoLines(shardManager, it).first.forEach {
                     builder.append(it)
                     builder.append("\n")
-                    builder.append("\n")
                 }
+                builder.append("\n")
             }
         }
 

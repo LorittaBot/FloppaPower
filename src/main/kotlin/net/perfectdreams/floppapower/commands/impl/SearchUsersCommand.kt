@@ -47,6 +47,8 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
             }
         }
 
+        matchedUsers.filter { it.timeCreated.isAfter(now) }
+
         val builder = StringBuilder("Users (${matchedUsers.size}):")
         builder.append("\n")
 
@@ -57,8 +59,7 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
                 matchedUsers.sortedBy { it.name }
             } else {
                 matchedUsers.sortedByDescending { it.mutualGuilds.size }
-            }.filter { it.timeCreated.isAfter(now) }
-                .forEach {
+            }.forEach {
                 builder.append("${it.name}#${it.discriminator} (${it.idLong}) - [${Constants.DATE_FORMATTER.format(it.timeCreated)}]")
                 builder.append("\n")
             }
@@ -69,8 +70,7 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
                 matchedUsers.sortedBy { it.name }
             } else {
                 matchedUsers.sortedByDescending { it.mutualGuilds.size }
-            }.filter { it.timeCreated.isAfter(now) }
-                .forEach {
+            }.forEach {
                 InfoGenerationUtils.generateUserInfoLines(shardManager, it).first.forEach {
                     builder.append(it)
                     builder.append("\n")

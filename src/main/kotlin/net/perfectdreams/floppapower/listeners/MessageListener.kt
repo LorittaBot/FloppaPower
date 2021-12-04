@@ -31,6 +31,7 @@ import net.perfectdreams.floppapower.tables.BlockedAvatarHashes
 import net.perfectdreams.floppapower.tables.BlockedUsers
 import net.perfectdreams.floppapower.utils.CheckedDueToType
 import net.perfectdreams.floppapower.utils.Constants
+import net.perfectdreams.floppapower.utils.InfoGenerationUtils
 import net.perfectdreams.floppapower.utils.MetadataEntryType
 import net.perfectdreams.floppapower.utils.extensions.await
 import org.jetbrains.exposed.sql.insertIgnore
@@ -231,7 +232,7 @@ class MessageListener(private val m: FloppaPower, private val shardManager: Shar
 
         for ((userId, user) in retrievedUsers.sortedByDescending { it.second?.flags?.size ?: 0 }) {
             if (user != null) {
-                val (lines, attentionMembersX) = generateUserInfoLines(shardManager, user)
+                val (lines, attentionMembersX) = InfoGenerationUtils.generateUserInfoLines(shardManager, user, user.mutualGuilds)
                 newLines.addAll(lines)
                 attentionUsers.addAll(attentionMembersX.map { it.user }.distinct())
                 newLines.add(userId.toString())

@@ -1,13 +1,12 @@
 package net.perfectdreams.floppapower.commands.impl
 
 import net.dv8tion.jda.api.entities.Guild
-import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
 import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
 import net.perfectdreams.floppapower.utils.Constants
-
+import net.perfectdreams.floppapower.utils.InfoGenerationUtils
 
 class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSlashCommand("topmutualusers") {
     companion object {
@@ -46,7 +45,7 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
                 )
                 .take(MAX_USERS_PER_LIST)
                 .forEach {
-                    lines.addAll(generateUserInfoLines(shardManager, it.user, it.mutualGuilds).first)
+                    lines.addAll(InfoGenerationUtils.generateUserInfoLines(shardManager, it.user, it.mutualGuilds).first)
                 }
 
             return lines
@@ -80,29 +79,6 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
             .retainFiles(listOf()) // Remove all files from the message
             .addFile(generateTopUsersMutualGuildsLines().joinToString("\n").toByteArray(Charsets.UTF_8), "users.txt")
             .queue()
-    }
-
-    // Stolen from MessageListener, maybe we should refactor the code later...
-    private fun generateUserInfoLines(shardManager: ShardManager, user: User, mutualGuilds: List<Guild>): Pair<List<String>, List<Member>> {
-        // Show the user name, if possible
-        val newLines = mutableListOf<String>()
-        val attentionMembers = mutableListOf<Member>()
-        newLines.add("# \uD83D\uDE10 ${user.name}#${user.discriminator} (${user.idLong}) [${Constants.DATE_FORMATTER.format(user.timeCreated)}]")
-        newLines.add("# ┗ \uD83D\uDD16️ Flags: ${user.flags.joinToString(", ")}")
-
-        if (mutualGuilds.isNotEmpty()) {
-            newLines.add("# ┗ \uD83C\uDFE0 Servidores:")
-            mutualGuilds.forEach { guild ->
-                val member = guild.getMember(user)!!
-                newLines.add("# ┗━ \uD83C\uDFE0 ${guild.name} (${member.roles.joinToString(", ") { it.name }}) [${Constants.DATE_FORMATTER.format(member.timeJoined)}]")
-                if (member.roles.any { Constants.TRUSTED_ROLES.any { trustedRoleName -> it.name.contains(trustedRoleName, true) }} || member.hasPermission(
-                        Constants.TRUSTED_PERMISSIONS)) {
-                    attentionMembers.add(member)
-                }
-            }
-        }
-        // newLines.add(user.idLong.toString())
-        return Pair(newLines, attentionMembers)
     }
 
     data class UserWithMutualGuilds(

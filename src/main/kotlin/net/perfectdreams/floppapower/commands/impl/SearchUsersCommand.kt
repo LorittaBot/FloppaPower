@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
 import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
+import net.perfectdreams.floppapower.utils.InfoGenerationUtils
 
 
 class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlashCommand("searchusers") {
@@ -30,8 +31,10 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
 
         val builder = StringBuilder("Users (${matchedUsers.size}):")
         builder.append("\n")
-        matchedUsers.forEach {
-            builder.append("${it.name}#${it.discriminator} (${it.idLong})")
+        matchedUsers.sortedBy { it.timeCreated }.forEach {
+            InfoGenerationUtils.generateUserInfoLines(shardManager, it, it.mutualGuilds).first.forEach {
+                builder.append(it)
+            }
             builder.append("\n")
         }
 

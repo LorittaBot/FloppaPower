@@ -6,7 +6,7 @@ import net.perfectdreams.floppapower.commands.AbstractSlashCommand
 
 class GuildsCommand(private val shardManager: ShardManager) : AbstractSlashCommand("guilds") {
     override fun execute(event: SlashCommandEvent) {
-        val builder = StringBuilder("Guilds (${shardManager.guildCache.size()})")
+        val builder = StringBuilder("Guilds (${shardManager.guildCache.size()}):")
         builder.append("\n")
         shardManager.guildCache.sortedByDescending { it.memberCache.size() }.forEach {
             builder.append("${it.name} (${it.idLong}) [${it.memberCache.size()} membros] <Shard ${it.jda.shardInfo.shardId}>")

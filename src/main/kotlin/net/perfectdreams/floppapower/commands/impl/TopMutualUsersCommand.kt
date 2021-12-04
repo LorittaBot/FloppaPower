@@ -61,10 +61,11 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
         var idx = 0
         val userCacheSize = shardManager.userCache.size()
         shardManager.userCache.forEach {
-            if (idx % 0 == 100_000 && idx != 0) {
+            if (idx % 50_000 == 0 && idx != 0) {
                 hook.editOriginal("**Verificando usuários $idx/$userCacheSize...**")
                     .queue()
             }
+
             // Ignore bots
             if (!it.isBot) {
                 val userMutualGuilds = shardManager.getMutualGuilds(it)

@@ -26,8 +26,7 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
             val lines = mutableListOf("Users:")
             var successfullyAddedUsers = 0
 
-            userWithMutualGuilds
-                .asSequence()
+            val sortedUsers = userWithMutualGuilds
                 .sortedWith(
                     compareBy(
                         {
@@ -39,20 +38,20 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
                         }
                     )
                 )
-                .take(MAX_USERS_PER_LIST)
-                .forEach {
-                    val linesToBeAdded = InfoGenerationUtils.generateUserInfoLines(it.user, it.mutualGuilds).first
 
-                    // Current size + lines to be added + new line length
-                    // If it is bigger than 8_000_000 (8MB), we are going to ignore it
-                    if (lines.sumOf { it.length } + linesToBeAdded.sumOf { it.length } + 1 > 8_000_000)
-                        return@forEach
+            for (sortedUser in sortedUsers) {
+                val linesToBeAdded = InfoGenerationUtils.generateUserInfoLines(sortedUser.user, sortedUser.mutualGuilds).first
 
-                    lines.addAll(linesToBeAdded)
-                    lines.add("\n")
+                // Current size + lines to be added + new line length
+                // If it is bigger than 8_000_000 (8MB), we are going to ignore it
+                if (lines.sumOf { it.length } + linesToBeAdded.sumOf { it.length } + 1 > 8_000_000)
+                    break
 
-                    successfullyAddedUsers++
-                }
+                lines.addAll(linesToBeAdded)
+                lines.add("\n")
+
+                successfullyAddedUsers++
+            }
 
             return Pair(successfullyAddedUsers, lines)
         }

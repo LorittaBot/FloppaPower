@@ -61,6 +61,10 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
         var idx = 0
         val userCacheSize = shardManager.userCache.size()
         shardManager.userCache.forEach {
+            if (idx % 0 == 100_000 && idx != 0) {
+                hook.editOriginal("**Verificando usuários $idx/$userCacheSize...**")
+                    .queue()
+            }
             // Ignore bots
             if (!it.isBot) {
                 val userMutualGuilds = shardManager.getMutualGuilds(it)
@@ -82,7 +86,7 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
         }
 
         val (successfullyAddedUsers, lines) = generateTopUsersMutualGuildsLines()
-        hook.editOriginal("**Todos os $userCacheSize usuários verificados! (${userWithMutualGuilds.size} válidos baseado no filtro)** <a:SCfloppaEARflop2:750859905858142258>\nResultado apenas possui os top $successfullyAddedUsers usuários, ignorando bots e usuários que estão na EPF!")
+        hook.editOriginal("**Todos os $userCacheSize usuários foram verificados! (${userWithMutualGuilds.size} válidos baseado no filtro)** <a:SCfloppaEARflop2:750859905858142258>\nResultado apenas possui os top $successfullyAddedUsers usuários, ignorando bots e usuários que estão na EPF!")
             .retainFiles(listOf()) // Remove all files from the message
             .addFile(
                 lines

@@ -5,16 +5,11 @@ import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
 import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
+import net.perfectdreams.floppapower.commands.impl.SearchUsersCommand.Companion.MAX_USERS_PER_LIST
 import net.perfectdreams.floppapower.utils.Constants
 import net.perfectdreams.floppapower.utils.InfoGenerationUtils
 
 class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSlashCommand("topmutualusers") {
-    companion object {
-        // 1000 users is around 493 KB
-        // so let's to 15_000 users!
-        const val MAX_USERS_PER_LIST = 15_000
-    }
-
     override fun execute(event: SlashCommandEvent) {
         event.deferReply().queue()
         val hook = event.hook // This is a special webhook that allows you to send messages without having permissions in the channel and also allows ephemeral messages
@@ -27,8 +22,9 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
             (shardManager.userCache.size() / 128).toInt()
         )
 
-        fun generateTopUsersMutualGuildsLines(): MutableList<String> {
+        fun generateTopUsersMutualGuildsLines(): Pair<Int, MutableList<String>> {
             val lines = mutableListOf("Users:")
+            var successfullyAddedUsers = 0
 
             userWithMutualGuilds
                 .asSequence()
@@ -45,11 +41,20 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
                 )
                 .take(MAX_USERS_PER_LIST)
                 .forEach {
-                    lines.addAll(InfoGenerationUtils.generateUserInfoLines(it.user, it.mutualGuilds).first)
+                    val linesToBeAdded = InfoGenerationUtils.generateUserInfoLines(it.user, it.mutualGuilds).first
+
+                    // Current size + lines to be added + new line length
+                    // If it is bigger than 8000, we are going to ignore it
+                    if (lines.sumOf { it.length } + linesToBeAdded.sumOf { it.length } + 1 > 8000)
+                        return@forEach
+
+                    lines.addAll(linesToBeAdded)
                     lines.add("\n")
+
+                    successfullyAddedUsers++
                 }
 
-            return lines
+            return Pair(successfullyAddedUsers, lines)
         }
 
         // I don't think that this is a good idea because it will take a looong time I guess...
@@ -76,12 +81,12 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
             idx++
         }
 
-        hook.editOriginal("**Todos os $userCacheSize usuários foram verificados! (${userWithMutualGuilds.size} válidos baseado no filtro)** <a:SCfloppaEARflop2:750859905858142258>\nResultado apenas possui os top $MAX_USERS_PER_LIST usuários, ignorando bots e usuários que estão na EPF!")
+        val (successfullyAddedUsers, lines) = generateTopUsersMutualGuildsLines()
+        hook.editOriginal("**Todos os $userCacheSize usuários verificados! (${userWithMutualGuilds.size} válidos baseado no filtro)** <a:SCfloppaEARflop2:750859905858142258>\nResultado apenas possui os top $successfullyAddedUsers usuários, ignorando bots e usuários que estão na EPF!")
             .retainFiles(listOf()) // Remove all files from the message
             .addFile(
-                generateTopUsersMutualGuildsLines()
+                lines
                     .joinToString("\n")
-                    .take(8_000) // Discord's file size limit, let's ignore everything after 8000 characters (8MB)
                     .toByteArray(Charsets.UTF_8),
                 "users.txt"
             )

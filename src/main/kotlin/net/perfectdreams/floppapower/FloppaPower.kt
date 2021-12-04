@@ -190,7 +190,11 @@ class FloppaPower {
 
         shardManager.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(
             CommandData("searchusers", "Busca usuários usando um RegEx")
-                .addOption(OptionType.STRING, "pattern", "RegEx pattern do usuário que você deseja procurar", true)
+                .addOption(OptionType.STRING, "pattern", "RegEx pattern do nome de usuário que você deseja procurar", true)
+        )?.queue()
+
+        shardManager.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(
+            CommandData("topmutualusers", "Mostra os top usuários que compartilham mais servidores com o Floppa")
         )?.queue()
 
         shardManager.getGuildById(Constants.ELITE_PENGUIN_FORCE_GUILD_ID)?.upsertCommand(

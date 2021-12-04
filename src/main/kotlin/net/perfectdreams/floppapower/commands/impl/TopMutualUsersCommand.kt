@@ -21,10 +21,11 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
         val hook = event.hook // This is a special webhook that allows you to send messages without having permissions in the channel and also allows ephemeral messages
 
         // Trying to avoid a humongous allocation due to array list resizes
-        // We are going to create a array list that has half of the size of the current user cache
+        // The filter seems to only match 15459 of 2303084 users, that's waaaay less than expected!
+        // We are going to create a array list that has / 128 of the size of the current user cache
         // Due to the checks we are doing below, we *probably* won't need to resize this... I hope.
         val userWithMutualGuilds = ArrayList<UserWithMutualGuilds>(
-            (shardManager.userCache.size() / 2).toInt()
+            (shardManager.userCache.size() / 128).toInt()
         )
 
         fun generateTopUsersMutualGuildsLines(): MutableList<String> {

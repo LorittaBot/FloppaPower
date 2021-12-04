@@ -8,6 +8,12 @@ import net.perfectdreams.floppapower.utils.InfoGenerationUtils
 
 
 class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlashCommand("searchusers") {
+    companion object {
+        // 1000 users is around 493 KB
+        // so let's to 15_000 users!
+        const val MAX_USERS_PER_LIST = 15_000
+    }
+
     override fun execute(event: SlashCommandEvent) {
         event.deferReply().queue()
         val hook = event.hook // This is a special webhook that allows you to send messages without having permissions in the channel and also allows ephemeral messages
@@ -19,7 +25,7 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
         var tooManyUsers = false
 
         shardManager.userCache.forEach {
-            if (matchedUsers.size >= 1000) {
+            if (matchedUsers.size >= MAX_USERS_PER_LIST) {
                 tooManyUsers = true
                 return@forEach
             }
@@ -39,7 +45,7 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
         }
 
         hook
-            .editOriginal(if (tooManyUsers) "Tem tantos usuários que eu limitei a 1000 usuários! <a:floppaTeeth:849638419885195324>" else "<a:SCfloppaEARflop2:750859905858142258>")
+            .editOriginal(if (tooManyUsers) "Tem tantos usuários que eu limitei a $MAX_USERS_PER_LIST usuários! <a:floppaTeeth:849638419885195324>" else "<a:SCfloppaEARflop2:750859905858142258>")
             .addFile(builder.toString().toByteArray(Charsets.UTF_8), "users.txt")
             .queue()
     }

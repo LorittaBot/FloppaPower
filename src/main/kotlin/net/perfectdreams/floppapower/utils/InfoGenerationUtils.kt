@@ -1,5 +1,10 @@
 package net.perfectdreams.floppapower.utils
 
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.sharding.ShardManager
+
 object InfoGenerationUtils {
     fun generateUserInfoLines(shardManager: ShardManager, user: User, mutualGuilds: List<Guild>): Pair<List<String>, List<Member>> {
         // Show the user name, if possible

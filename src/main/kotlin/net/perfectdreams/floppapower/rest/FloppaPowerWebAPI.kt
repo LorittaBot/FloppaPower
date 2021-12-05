@@ -195,6 +195,7 @@ class FloppaPowerWebAPI(val floppaPower: FloppaPower, val shardManager: ShardMan
                         .asSequence()
                         .filter { it.name.matches(regex) }
                         .filter { it.timeCreated.isAfter(now) }
+                        .take(10_000)
                         .sortedBy { it.name }
                         .toList()
 

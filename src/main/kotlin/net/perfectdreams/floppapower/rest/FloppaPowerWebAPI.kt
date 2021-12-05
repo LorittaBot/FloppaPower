@@ -183,7 +183,7 @@ class FloppaPowerWebAPI(val floppaPower: FloppaPower, val shardManager: ShardMan
                     val regexParam = call.request.queryParameters["regex"]
 
                     if (regexParam.isNullOrEmpty()) {
-                        call.respondText("Ta faltando algo não? dica: regex", ContentType.Application.Json, HttpStatusCode.NotFound)
+                        call.respondText("Ta faltando algo não? dica: regex", ContentType.Application.Json, HttpStatusCode.BadRequest)
                         return@get
                     }
                     val regex = Regex(regexParam, RegexOption.IGNORE_CASE)
@@ -195,6 +195,7 @@ class FloppaPowerWebAPI(val floppaPower: FloppaPower, val shardManager: ShardMan
                         .asSequence()
                         .filter { it.name.matches(regex) }
                         .filter { it.timeCreated.isAfter(now) }
+                        .sortedBy { it.name }
                         .toList()
 
                     if (filteredMatchedUsers.isEmpty()) {

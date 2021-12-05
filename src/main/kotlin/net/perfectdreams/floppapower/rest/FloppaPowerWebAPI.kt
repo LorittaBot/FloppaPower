@@ -178,11 +178,14 @@ class FloppaPowerWebAPI(val floppaPower: FloppaPower, val shardManager: ShardMan
                         )
                     }
                 }
-                get("/api/v1/search-users/{regex}") {
-                    val regexParam = call.parameters.getOrFail("regex")
-                    val regex = Regex(regexParam, RegexOption.IGNORE_CASE)
-
+                get("/api/v1/users/search") {
                     val timeFilter = call.request.queryParameters["creation_time"]?.toLong() ?: "36500".toLong()
+                    val regexParam = call.request.queryParameters["regex"]!!
+
+                    if (regexParam.isEmpty()) {
+                        call.respondText("[]", ContentType.Application.Json, HttpStatusCode.NotFound)
+                    }
+                    val regex = Regex(regexParam, RegexOption.IGNORE_CASE)
 
                     val now = OffsetDateTime.now(ZoneId.of("America/Sao_Paulo"))
                         .minusDays(timeFilter)

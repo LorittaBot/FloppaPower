@@ -26,6 +26,8 @@ import net.perfectdreams.floppapower.tables.BlockedUsers
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.time.OffsetDateTime
+import java.time.ZoneId
 
 class FloppaPowerWebAPI(val floppaPower: FloppaPower, val shardManager: ShardManager) {
     @OptIn(ExperimentalSerializationApi::class)
@@ -176,7 +178,42 @@ class FloppaPowerWebAPI(val floppaPower: FloppaPower, val shardManager: ShardMan
                         )
                     }
                 }
+                get("/api/v1/search-users/{regex}") {
+                    val regexParam = call.parameters.getOrFail("regex")
+                    val regex = Regex(regexParam, RegexOption.IGNORE_CASE)
+
+                    val timeFilter = call.request.queryParameters["creation_time"]?.toLong() ?: "36500".toLong()
+
+                    val now = OffsetDateTime.now(ZoneId.of("America/Sao_Paulo"))
+                        .minusDays(timeFilter)
+
+                    val filteredMatchedUsers = shardManager.userCache
+                        .asSequence()
+                        .filter { it.name.matches(regex) }
+                        .filter { it.timeCreated.isAfter(now) }
+                        .toList()
+
+                    if (filteredMatchedUsers.isEmpty()) {
+                        call.respondText("[]", ContentType.Application.Json, HttpStatusCode.NotFound)
+                    } else {
+                        call.respondText(
+                            Json.encodeToString(
+                                filteredMatchedUsers.map {
+                                    User(
+                                        it.idLong,
+                                        it.name,
+                                        it.discriminator,
+                                        it.avatarId
+                                    )
+                                }
+                            ),
+                            ContentType.Application.Json,
+                            HttpStatusCode.OK
+                        )
+                    }
+                }
             }
+
         }.start(wait = true)
     }
 }

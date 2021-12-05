@@ -47,30 +47,30 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
             }
         }
 
-        val builder = StringBuilder("Users (${matchedUsers.size}):")
+        val filteredMatchedUsers = matchedUsers.filter { it.timeCreated.isAfter(now) }
+
+        val builder = StringBuilder("Users (${filteredMatchedUsers.size}):")
         builder.append("\n")
 
         if (list) {
             if (sortBy == "creation_date") {
-                matchedUsers.sortedByDescending { it.timeCreated }
+                filteredMatchedUsers.sortedByDescending { it.timeCreated }
             } else if (sortBy == "alphabetically") { // alphabetically, needs to be exaustive
-                matchedUsers.sortedBy { it.name }
+                filteredMatchedUsers.sortedBy { it.name }
             } else {
-                matchedUsers.sortedByDescending { it.mutualGuilds.size }
-            }.filter { it.timeCreated.isAfter(now) }
-                .forEach {
+                filteredMatchedUsers.sortedByDescending { it.mutualGuilds.size }
+            }.forEach {
                 builder.append("${it.name}#${it.discriminator} (${it.idLong}) - [${Constants.DATE_FORMATTER.format(it.timeCreated)}]")
                 builder.append("\n")
             }
         } else {
             if (sortBy == "creation_date") {
-                matchedUsers.sortedByDescending { it.timeCreated }
+                filteredMatchedUsers.sortedByDescending { it.timeCreated }
             } else if (sortBy == "alphabetically") { // alphabetically, needs to be exaustive
-                matchedUsers.sortedBy { it.name }
+                filteredMatchedUsers.sortedBy { it.name }
             } else {
-                matchedUsers.sortedByDescending { it.mutualGuilds.size }
-            }.filter { it.timeCreated.isAfter(now) }
-                .forEach {
+                filteredMatchedUsers.sortedByDescending { it.mutualGuilds.size }
+            }.forEach {
                 InfoGenerationUtils.generateUserInfoLines(shardManager, it).first.forEach {
                     builder.append(it)
                     builder.append("\n")

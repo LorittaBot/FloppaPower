@@ -53,24 +53,28 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
         builder.append("\n")
 
         if (list) {
-            if (sortBy == "creation_date") {
+            val filteredAndSortedUsers = if (sortBy == "creation_date") {
                 filteredMatchedUsers.sortedByDescending { it.timeCreated }
             } else if (sortBy == "alphabetically") { // alphabetically, needs to be exaustive
                 filteredMatchedUsers.sortedBy { it.name }
             } else {
                 filteredMatchedUsers.sortedByDescending { it.mutualGuilds.size }
-            }.forEach {
+            }
+
+            filteredAndSortedUsers.forEach {
                 builder.append("${it.name}#${it.discriminator} (${it.idLong}) - [${Constants.DATE_FORMATTER.format(it.timeCreated)}]")
                 builder.append("\n")
             }
         } else {
-            if (sortBy == "creation_date") {
+            val filteredAndSortedUsers = if (sortBy == "creation_date") {
                 filteredMatchedUsers.sortedByDescending { it.timeCreated }
             } else if (sortBy == "alphabetically") { // alphabetically, needs to be exaustive
                 filteredMatchedUsers.sortedBy { it.name }
             } else {
                 filteredMatchedUsers.sortedByDescending { it.mutualGuilds.size }
-            }.forEach {
+            }
+
+            filteredAndSortedUsers.forEach {
                 InfoGenerationUtils.generateUserInfoLines(shardManager, it).first.forEach {
                     builder.append(it)
                     builder.append("\n")

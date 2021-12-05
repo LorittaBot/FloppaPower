@@ -180,10 +180,11 @@ class FloppaPowerWebAPI(val floppaPower: FloppaPower, val shardManager: ShardMan
                 }
                 get("/api/v1/users/search") {
                     val timeFilter = call.request.queryParameters["creation_time"]?.toLong() ?: "36500".toLong()
-                    val regexParam = call.request.queryParameters["regex"]!!
+                    val regexParam = call.request.queryParameters["regex"]
 
-                    if (regexParam.isEmpty()) {
-                        call.respondText("[]", ContentType.Application.Json, HttpStatusCode.NotFound)
+                    if (regexParam.isNullOrEmpty()) {
+                        call.respondText("Ta faltando algo não? dica: regex", ContentType.Application.Json, HttpStatusCode.NotFound)
+                        return@get
                     }
                     val regex = Regex(regexParam, RegexOption.IGNORE_CASE)
 

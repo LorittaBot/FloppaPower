@@ -33,21 +33,19 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
         val now = OffsetDateTime.now(ZoneId.of("America/Sao_Paulo"))
             .minusDays(creationTimeDayFilter)
 
-        val matchedUsers = mutableListOf<User>()
+        val filteredMatchedUsers = mutableListOf<User>()
         var tooManyUsers = false
 
         shardManager.userCache.forEach {
-            if (matchedUsers.size >= MAX_USERS_PER_LIST) {
+            if (filteredMatchedUsers.size >= MAX_USERS_PER_LIST) {
                 tooManyUsers = true
                 return@forEach
             }
 
-            if (it.name.matches(regex)) {
-                matchedUsers.add(it)
+            if (it.timeCreated.isAfter(now) && it.name.matches(regex)) {
+                filteredMatchedUsers.add(it)
             }
         }
-
-        val filteredMatchedUsers = matchedUsers.filter { it.timeCreated.isAfter(now) }
 
         val builder = StringBuilder("Users (${filteredMatchedUsers.size}):")
         builder.append("\n")

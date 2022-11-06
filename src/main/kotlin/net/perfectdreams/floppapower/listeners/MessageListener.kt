@@ -44,8 +44,10 @@ class MessageListener(private val m: FloppaPower, private val shardManager: Shar
     companion object {
         private val GENERIC_ROLES = listOf(
             "Owner",
-            "Admin",
-            "Moderator"
+            "Administrator",
+            "Developer",
+            "Moderator",
+            "EPF Boosters"
         )
         private val logger = KotlinLogging.logger {}
         private val mutex = Mutex()

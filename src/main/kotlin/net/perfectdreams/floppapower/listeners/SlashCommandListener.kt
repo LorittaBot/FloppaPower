@@ -12,16 +12,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData
 import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.FloppaPower
-import net.perfectdreams.floppapower.commands.impl.CheckGuildCommand
-import net.perfectdreams.floppapower.commands.impl.CheckGuildsCommand
-import net.perfectdreams.floppapower.commands.impl.CheckSimilarAvatarsCommand
-import net.perfectdreams.floppapower.commands.impl.GuildsCommand
-import net.perfectdreams.floppapower.commands.impl.SameAvatarHashCommand
-import net.perfectdreams.floppapower.commands.impl.SameAvatarUserCommand
-import net.perfectdreams.floppapower.commands.impl.SearchUsersCommand
-import net.perfectdreams.floppapower.commands.impl.SharedGuildsCommand
-import net.perfectdreams.floppapower.commands.impl.SusJoinsCommand
-import net.perfectdreams.floppapower.commands.impl.TopMutualUsersCommand
+import net.perfectdreams.floppapower.commands.impl.*
 import net.perfectdreams.floppapower.utils.Constants
 import net.perfectdreams.floppapower.utils.FloppaButtonClickEvent
 import java.util.*
@@ -35,6 +26,7 @@ class SlashCommandListener(private val m: FloppaPower, private val shardManager:
 
     private val commands = listOf(
         GuildsCommand(shardManager),
+        LeaveGuildCommand(m, shardManager),
         CheckGuildCommand(m, shardManager),
         CheckGuildsCommand(m, shardManager),
         SameAvatarHashCommand(m, shardManager),

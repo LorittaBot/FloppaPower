@@ -50,6 +50,11 @@ class SlashCommandListener(private val m: FloppaPower, private val shardManager:
         ).queue()
 
         guild.upsertCommand(
+            CommandData("leaveguild", "Faça o Floppa sair de um servidor em que ele está")
+                .addOption(OptionType.STRING, "guild_id", "ID do Servidor", true)
+        ).queue()
+
+        guild.upsertCommand(
             CommandData("checkguild", "Verifique meliantes em um servidor")
                 .addOption(OptionType.STRING, "guild_id", "ID do Servidor", true)
         ).queue()

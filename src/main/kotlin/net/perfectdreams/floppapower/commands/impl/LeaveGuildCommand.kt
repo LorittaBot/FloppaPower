@@ -8,16 +8,12 @@ import net.perfectdreams.floppapower.commands.AbstractSlashCommand
 class LeaveGuildCommand(private val m: FloppaPower, private val shardManager: ShardManager) : AbstractSlashCommand("leaveguild") {
     override fun execute(event: SlashCommandEvent) {
         val guildId = event.getOption("guild_id")?.asString?.toLongOrNull()
+        val peguinGuardID = 819692196378443800L
 
-        val allowedUsers = listOf(
-            123170274651668480L,
-            361977144445763585L
-        )
-
-        if (allowedUsers.contains(event.interaction.user.idLong)) {
+        if (event.member?.roles?.map { it.idLong }?.contains(peguinGuardID)!!) {
             if (guildId == null) {
                 event.deferReply(true)
-                    .setContent("Não sei qual é esse servidor não fera <a:floppaTeeth:849638419885195324>")
+                    .setContent("Que diacho é esse que você escreveu meu amigo kk <a:floppaTeeth:849638419885195324>")
                     .queue()
                 return
             }
@@ -25,26 +21,28 @@ class LeaveGuildCommand(private val m: FloppaPower, private val shardManager: Sh
             val guild = shardManager.getGuildById(guildId)
 
             if (guild !== null) {
-                guild.leave()
+                guild
+                    .leave()
+                    .queue()
 
                 event.deferReply()
                     .setContent(
                         """
-                        |Eu saí de `${guild.name}` (`${guild.id}`) como foi pedido!
-                        |A guild tinha `${guild.memberCount} membros`!
-                        |E pertencia à `${guild.owner?.user?.asTag}` (`${guild.owner?.id}`)
+                            🚪 Eu saí de `${guild.name}` (`${guild.id}`) como foi pedido!
+                            👑 Pertence à `${guild.owner?.user?.asTag}` (`${guild.owner?.id}`)
+                            👥 E tem um total de `${guild.memberCount} membros`!
                         """.trimIndent()
                     )
                     .queue()
             } else {
                 event.deferReply(true)
-                    .setContent("Não estou em nenhuma guild com este ID! Verifique se está certo")
+                    .setContent("Não estou em nenhuma guild com este ID! Verifique se está certo <a:00floppaearsfast:853465928036909126>")
                     .queue()
                 return
             }
         } else {
             event.deferReply(true)
-                .setContent("Você não tem permissão para usar este comando!")
+                .setContent("Você não tem permissão para usar este comando! <a:floppaTeeth:849638419885195324>")
                 .queue()
             return
         }

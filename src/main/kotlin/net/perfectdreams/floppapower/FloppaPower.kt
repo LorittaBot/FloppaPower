@@ -95,6 +95,7 @@ class FloppaPower {
 
         val shardManager = DefaultShardManagerBuilder.createDefault(
             System.getenv("FLOPPA_DISCORD_TOKEN"),
+            GatewayIntent.MESSAGE_CONTENT,
             GatewayIntent.GUILD_MEMBERS,
             GatewayIntent.GUILD_MESSAGES,
             GatewayIntent.GUILD_MODERATION

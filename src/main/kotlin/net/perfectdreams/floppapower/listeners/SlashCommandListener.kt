@@ -136,6 +136,10 @@ class SlashCommandListener(private val m: FloppaPower, private val shardManager:
                         .addChoice("Gosto de ver pegando fogo!", "36500")
                 )
         ).queue()
+
+        guild.upsertCommand(
+            Commands.slash("ping", "Verifica se o Floppa está online")
+        ).queue()
     }
 
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {

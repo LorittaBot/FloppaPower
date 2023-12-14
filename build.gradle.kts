@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm") version "1.5.31"
-    kotlin("plugin.serialization") version "1.5.31"
+    kotlin("jvm") version "1.9.10"
+    kotlin("plugin.serialization") version "1.9.10"
     id("com.google.cloud.tools.jib") version "3.1.4"
 }
 
@@ -17,31 +17,21 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation("net.dv8tion:JDA:5.0.0-alpha.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.3.0")
-    implementation("org.jetbrains.exposed:exposed-core:0.31.1")
-    implementation("org.jetbrains.exposed:exposed-jdbc:0.31.1")
-    implementation("org.jetbrains.exposed:exposed-dao:0.31.1")
-    implementation("org.jetbrains.exposed:exposed-java-time:0.31.1")
-    implementation("org.xerial:sqlite-jdbc:3.34.0")
+    implementation("net.dv8tion:JDA:5.0.0-beta.18")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.6.2")
+    implementation("org.jetbrains.exposed:exposed-core:0.45.0")
+    implementation("org.jetbrains.exposed:exposed-jdbc:0.45.0")
+    implementation("org.jetbrains.exposed:exposed-dao:0.45.0")
+    implementation("org.jetbrains.exposed:exposed-java-time:0.45.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.5.2")
-    implementation("org.postgresql:postgresql:42.2.24")
-    implementation("com.zaxxer:HikariCP:5.0.0")
-    implementation("io.ktor:ktor-server-netty:1.6.5")
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
-
-    // Kord
-    // implementation("dev.kord:kord-gateway:0.8.x-SNAPSHOT")
-    // implementation("dev.kord:kord-rest:0.8.x-SNAPSHOT")
-
-    // Discord InteraKTions
-    // implementation("net.perfectdreams.discordinteraktions:gateway-kord:0.0.10-SNAPSHOT")
+    implementation("org.postgresql:postgresql:42.7.1")
+    implementation("com.zaxxer:HikariCP:5.1.0")
+    implementation("io.ktor:ktor-server-netty:2.3.7")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
     api("io.github.microutils:kotlin-logging:2.0.6")
-    // Async Appender is broken in alpha5
-    // https://stackoverflow.com/questions/58742485/logback-error-no-attached-appenders-found
-    api("ch.qos.logback:logback-classic:1.3.0-alpha4")
+    api("ch.qos.logback:logback-classic:1.4.14")
 }
 
 jib {
@@ -56,20 +46,5 @@ jib {
 
     from {
         image = "eclipse-temurin:17-jdk-alpine"
-    }
-}
-
-tasks {
-    val runnableJar = runnableJarTask(
-        DEFAULT_SHADED_WITHIN_JAR_LIBRARIES,
-        configurations.runtimeClasspath.get(),
-        jar.get(),
-        "net.perfectdreams.floppapower.FloppaPowerLauncher",
-        mapOf()
-    )
-
-    "build" {
-        // This should be ran BEFORE the JAR is compiled!
-        dependsOn(runnableJar)
     }
 }

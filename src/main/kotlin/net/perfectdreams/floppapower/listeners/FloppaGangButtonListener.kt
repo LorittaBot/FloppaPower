@@ -1,13 +1,13 @@
 package net.perfectdreams.floppapower.listeners
 
-import net.dv8tion.jda.api.events.interaction.ButtonClickEvent
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.FloppaPower
 import net.perfectdreams.floppapower.utils.Constants
 
 class FloppaGangButtonListener(private val m: FloppaPower, private val shardManager: ShardManager) : ListenerAdapter() {
-    override fun onButtonClick(event: ButtonClickEvent) {
+    override fun onButtonInteraction(event: ButtonInteractionEvent) {
         if (event.componentId != "get_floppa_role")
             return
 

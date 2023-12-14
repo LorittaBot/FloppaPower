@@ -3,7 +3,7 @@ package net.perfectdreams.floppapower.commands.impl
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.FloppaPower
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
@@ -11,7 +11,7 @@ import net.perfectdreams.floppapower.listeners.SlashCommandListener
 import net.perfectdreams.floppapower.utils.CheckedDueToType
 
 class CheckGuildsCommand(private val m: FloppaPower, private val shardManager: ShardManager) : AbstractSlashCommand("checkguilds") {
-    override fun execute(event: SlashCommandEvent) {
+    override fun execute(event: SlashCommandInteractionEvent) {
         if (SlashCommandListener.verificationMutex.isLocked) {
             event.deferReply(true)
                 .setContent("Já tem uma verificação em andamento, espere ela acabar! <a:floppaTeeth:849638419885195324>")

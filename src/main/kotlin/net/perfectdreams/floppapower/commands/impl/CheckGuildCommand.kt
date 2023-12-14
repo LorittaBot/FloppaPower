@@ -3,7 +3,7 @@ package net.perfectdreams.floppapower.commands.impl
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.FloppaPower
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
@@ -11,7 +11,7 @@ import net.perfectdreams.floppapower.listeners.SlashCommandListener
 import net.perfectdreams.floppapower.utils.CheckedDueToType
 
 class CheckGuildCommand(private val m: FloppaPower, private val shardManager: ShardManager) : AbstractSlashCommand("checkguild") {
-    override fun execute(event: SlashCommandEvent) {
+    override fun execute(event: SlashCommandInteractionEvent) {
         val guildId = event.getOption("guild_id")?.asString?.toLongOrNull()
 
         if (guildId == null) {

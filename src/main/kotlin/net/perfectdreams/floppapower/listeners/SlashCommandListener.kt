@@ -3,11 +3,11 @@ package net.perfectdreams.floppapower.listeners
 import kotlinx.coroutines.sync.Mutex
 import mu.KotlinLogging
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent
-import net.dv8tion.jda.api.events.interaction.ButtonClickEvent
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.commands.OptionType
-import net.dv8tion.jda.api.interactions.commands.build.CommandData
+import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData
 import net.dv8tion.jda.api.sharding.ShardManager
@@ -16,7 +16,6 @@ import net.perfectdreams.floppapower.commands.impl.*
 import net.perfectdreams.floppapower.utils.Constants
 import net.perfectdreams.floppapower.utils.FloppaButtonClickEvent
 import java.util.*
-import kotlin.concurrent.thread
 
 class SlashCommandListener(private val m: FloppaPower, private val shardManager: ShardManager) : ListenerAdapter() {
     companion object {
@@ -36,7 +35,8 @@ class SlashCommandListener(private val m: FloppaPower, private val shardManager:
         SameAvatarUserCommand(m, shardManager),
         SusJoinsCommand(m, shardManager),
         SearchUsersCommand(shardManager),
-        TopMutualUsersCommand(shardManager)
+        TopMutualUsersCommand(shardManager),
+        PingCommand(m, shardManager)
     )
 
     override fun onGuildReady(event: GuildReadyEvent) {
@@ -46,30 +46,30 @@ class SlashCommandListener(private val m: FloppaPower, private val shardManager:
         val guild = event.guild
 
         guild.upsertCommand(
-            CommandData("guilds", "Mostra quais servidores o Floppa está")
+            Commands.slash("guilds", "Mostra quais servidores o Floppa está")
         ).queue()
 
         guild.upsertCommand(
-            CommandData("leaveguild", "Faça o Floppa sair de um servidor em que ele está")
+            Commands.slash("leaveguild", "Faça o Floppa sair de um servidor em que ele está")
                 .addOption(OptionType.STRING, "guild_id", "ID do Servidor", true)
         ).queue()
 
         guild.upsertCommand(
-            CommandData("checkguild", "Verifique meliantes em um servidor")
+            Commands.slash("checkguild", "Verifique meliantes em um servidor")
                 .addOption(OptionType.STRING, "guild_id", "ID do Servidor", true)
         ).queue()
 
         guild.upsertCommand(
-            CommandData("checkguilds", "Verifique meliantes em todos os servidores que eu estou")
+            Commands.slash("checkguilds", "Verifique meliantes em todos os servidores que eu estou")
         ).queue()
 
         guild.upsertCommand(
-            CommandData("checksimilaravatars", "Verifique meliantes com avatares similares")
+            Commands.slash("checksimilaravatars", "Verifique meliantes com avatares similares")
                 .addOption(OptionType.INTEGER, "page", "Página", false)
         ).queue()
 
         guild.upsertCommand(
-            CommandData("sameavatar", "Verifique meliantes que possuem o mesmo avatar")
+            Commands.slash("sameavatar", "Verifique meliantes que possuem o mesmo avatar")
                 .addSubcommands(
                     SubcommandData("hash", "Verifique meliantes que possuem o mesmo avatar pelo hash")
                         .addOption(OptionType.STRING, "hash", "O hash do avatar", true),
@@ -79,12 +79,12 @@ class SlashCommandListener(private val m: FloppaPower, private val shardManager:
         ).queue()
 
         guild.upsertCommand(
-            CommandData("sharedguilds", "Verifique aonde os meliantes estão na fuga")
+            Commands.slash("sharedguilds", "Verifique aonde os meliantes estão na fuga")
                 .addOption(OptionType.USER, "user", "O meliante", true)
         ).queue()
 
         guild.upsertCommand(
-            CommandData("searchusers", "Busca usuários usando um RegEx")
+            Commands.slash("searchusers", "Busca usuários usando um RegEx")
                 .addOption(OptionType.STRING, "pattern", "RegEx pattern do nome de usuário que você deseja procurar", true)
                 .addOption(OptionType.BOOLEAN, "list", "Gera uma lista sem os detalhes", false)
                 .addOptions(
@@ -108,11 +108,11 @@ class SlashCommandListener(private val m: FloppaPower, private val shardManager:
         ).queue()
 
         guild.upsertCommand(
-            CommandData("topmutualusers", "Mostra os top usuários que compartilham mais servidores com o Floppa")
+            Commands.slash("topmutualusers", "Mostra os top usuários que compartilham mais servidores com o Floppa")
         ).queue()
 
         guild.upsertCommand(
-            CommandData("susjoins", "Verifique meliantes que entraram em vários servidores em seguida")
+            Commands.slash("susjoins", "Verifique meliantes que entraram em vários servidores em seguida")
                 .addOptions(
                     OptionData(OptionType.STRING, "time", "A diferença + e - de tempo que o meliante entrou, baseado no tempo de entrada no \"meio\" dos joins", true)
                         .addChoice("10 segundos", "5")
@@ -138,11 +138,11 @@ class SlashCommandListener(private val m: FloppaPower, private val shardManager:
         ).queue()
     }
 
-    override fun onSlashCommand(event: SlashCommandEvent) {
+    override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
         m.executor.execute {
             logger.info { "Received Slash Command ${event.name} from ${event.user}" }
 
-            val command = commands.firstOrNull { it.commandPath == event.commandPath }
+            val command = commands.firstOrNull { it.commandPath == event.fullCommandName }
 
             if (command != null) {
                 command.execute(event)
@@ -151,7 +151,7 @@ class SlashCommandListener(private val m: FloppaPower, private val shardManager:
         }
     }
 
-    override fun onButtonClick(event: ButtonClickEvent) {
+    override fun onButtonInteraction(event: ButtonInteractionEvent) {
         try {
             val uniqueId = UUID.fromString(event.componentId)
             m.slashCommandButtonInteractionCache[uniqueId]?.invoke(

@@ -9,19 +9,20 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import mu.KotlinLogging
-import net.dv8tion.jda.api.MessageBuilder
-import net.dv8tion.jda.api.entities.Emoji
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
-import net.dv8tion.jda.api.events.interaction.ButtonClickEvent
+import net.dv8tion.jda.api.entities.emoji.Emoji
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.exceptions.ErrorResponseException
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.components.ActionRow
-import net.dv8tion.jda.api.interactions.components.Button
-import net.dv8tion.jda.api.interactions.components.ButtonStyle
+import net.dv8tion.jda.api.interactions.components.buttons.Button
+import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.sharding.ShardManager
+import net.dv8tion.jda.api.utils.FileUpload
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import net.perfectdreams.floppapower.FloppaPower
 import net.perfectdreams.floppapower.dao.MessageMetadata
 import net.perfectdreams.floppapower.dao.MultiEntryMetadata
@@ -86,21 +87,23 @@ class MessageListener(private val m: FloppaPower, private val shardManager: Shar
                     }
 
                     event.channel.sendMessage(
-                        MessageBuilder()
+                        MessageCreateBuilder()
                             .setContent(generateContentFromMetadata(metadata))
-                            .setActionRows(generateActionRowFromMetadata(metadata))
+                            .setComponents(generateActionRowFromMetadata(metadata))
                             .setAllowedMentions(listOf(Message.MentionType.ROLE)) // none. thank you, next
                             .build()
-                    ).addFile(
-                        checkUserIdsInLines(shardManager, data)
-                            .toMutableList()
-                            .apply {
-                                this.add(0, "")
-                                this.add(0, "# Message Metadata ID: ${metadata.id.value}")
-                            }
-                            .joinToString("\n")
-                            .toByteArray(Charsets.UTF_8),
-                        "report.txt"
+                    ).setFiles(
+                        FileUpload.fromData(
+                            checkUserIdsInLines(shardManager, data)
+                                .toMutableList()
+                                .apply {
+                                    this.add(0, "")
+                                    this.add(0, "# Message Metadata ID: ${metadata.id.value}")
+                                }
+                                .joinToString("\n")
+                                .toByteArray(Charsets.UTF_8),
+                            "report.txt"
+                        )
                     ).queue()
                 } catch (e: Throwable) {
                     logger.warn(e) { "Something went wrong while trying to create a selfbot_id report!" }
@@ -129,22 +132,23 @@ class MessageListener(private val m: FloppaPower, private val shardManager: Shar
                     }
 
                     event.channel.sendMessage(
-                        MessageBuilder()
+                        MessageCreateBuilder()
                             .setContent(generateContentFromMetadata(metadata))
-                            .setActionRows(generateActionRowFromMetadata(metadata))
+                            .setComponents(generateActionRowFromMetadata(metadata))
                             .setAllowedMentions(listOf(Message.MentionType.ROLE)) // only role mentions
                             .build()
-                    ).addFile(
-                        checkAvatarHashesInLines(shardManager, validatedData)
-                            .toMutableList()
-                            .apply {
-                                this.add(0, "")
-                                this.add(0, "# Message Metadata ID: ${metadata.id.value}")
-                            }
-                            .joinToString("\n")
-                            .toByteArray(Charsets.UTF_8),
-
-                        "report.txt"
+                    ).setFiles(
+                        FileUpload.fromData(
+                            checkAvatarHashesInLines(shardManager, validatedData)
+                                .toMutableList()
+                                .apply {
+                                    this.add(0, "")
+                                    this.add(0, "# Message Metadata ID: ${metadata.id.value}")
+                                }
+                                .joinToString("\n")
+                                .toByteArray(Charsets.UTF_8),
+                            "report.txt"
+                        )
                     ).queue()
                 } catch (e: Throwable) {
                     logger.warn(e) { "Something went wrong while trying to create a selfbot_id report!" }
@@ -317,7 +321,7 @@ class MessageListener(private val m: FloppaPower, private val shardManager: Shar
         return veryImportantStuff
     }
 
-    override fun onButtonClick(event: ButtonClickEvent) {
+    override fun onButtonInteraction(event: ButtonInteractionEvent) {
         if (!event.componentId.startsWith("approve_ban_entry-") && !event.componentId.startsWith("delete_ban_entry-"))
             return
 
@@ -348,7 +352,7 @@ class MessageListener(private val m: FloppaPower, private val shardManager: Shar
                         // Update the message if it was processed but the buttons are somehow active
                         event.deferEdit()
                             .setContent(generateContentFromMetadata(metadata))
-                            .setActionRows(generateActionRowFromMetadata(metadata))
+                            .setComponents(generateActionRowFromMetadata(metadata))
                             .queue {
                                 // And tell the user that it was already processed
                                 it.setEphemeral(true)
@@ -397,7 +401,7 @@ class MessageListener(private val m: FloppaPower, private val shardManager: Shar
 
                             event.deferEdit()
                                 .setContent(generateContentFromMetadata(metadata))
-                                .setActionRows(generateActionRowFromMetadata(metadata))
+                                .setComponents(generateActionRowFromMetadata(metadata))
                                 .queue()
 
                             if (metadata.approvedByAsList.size >= metadata.type.requiredApprovals) {
@@ -626,7 +630,7 @@ class MessageListener(private val m: FloppaPower, private val shardManager: Shar
                         true -> "Yay, os não-meliantes foram removidos do xilindró!"
                         false -> "Yay, os meliantes foram adicionados ao xilindró!"
                     },
-                    Emoji.fromEmote("lori_coffee", 727631176432484473, false)
+                    Emoji.fromCustom("lori_coffee", 727631176432484473, false)
                 ).asDisabled()
             )
         } else {
@@ -635,13 +639,13 @@ class MessageListener(private val m: FloppaPower, private val shardManager: Shar
                     ButtonStyle.DANGER,
                     "approve_ban_entry-${metadata.id.value}",
                     "Aprovar",
-                    Emoji.fromEmote("lori_ban_hammer", 741058240455901254, false)
+                    Emoji.fromCustom("lori_ban_hammer", 741058240455901254, false)
                 ),
                 Button.of(
                     ButtonStyle.SECONDARY,
                     "delete_ban_entry-${metadata.id.value}",
                     "Deletar",
-                    Emoji.fromEmote("lori_sob", 556524143281963008, false)
+                    Emoji.fromCustom("lori_sob", 556524143281963008, false)
                 )
             )
         }

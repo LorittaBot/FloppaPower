@@ -1,8 +1,9 @@
 package net.perfectdreams.floppapower.commands.impl
 
 import net.dv8tion.jda.api.entities.User
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.sharding.ShardManager
+import net.dv8tion.jda.api.utils.FileUpload
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
 import net.perfectdreams.floppapower.utils.Constants
 import net.perfectdreams.floppapower.utils.InfoGenerationUtils
@@ -17,7 +18,7 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
         const val MAX_USERS_PER_LIST = 15_000
     }
 
-    override fun execute(event: SlashCommandEvent) {
+    override fun execute(event: SlashCommandInteractionEvent) {
         event.deferReply().queue()
         val hook = event.hook // This is a special webhook that allows you to send messages without having permissions in the channel and also allows ephemeral messages
 
@@ -83,7 +84,7 @@ class SearchUsersCommand(private val shardManager: ShardManager) : AbstractSlash
 
         hook
             .editOriginal(if (tooManyUsers) "Tem tantos usuários que eu limitei a $MAX_USERS_PER_LIST usuários! <a:floppaTeeth:849638419885195324>" else "<a:SCfloppaEARflop2:750859905858142258>")
-            .addFile(builder.toString().take(8_000_000).toByteArray(Charsets.UTF_8), "users.txt")
+            .setFiles(FileUpload.fromData(builder.toString().take(8_000_000).toByteArray(Charsets.UTF_8), "users.txt"))
             .queue()
     }
 }

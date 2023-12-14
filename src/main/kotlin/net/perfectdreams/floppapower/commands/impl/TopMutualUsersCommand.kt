@@ -2,15 +2,16 @@ package net.perfectdreams.floppapower.commands.impl
 
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.User
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.sharding.ShardManager
+import net.dv8tion.jda.api.utils.FileUpload
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
 import net.perfectdreams.floppapower.commands.impl.SearchUsersCommand.Companion.MAX_USERS_PER_LIST
 import net.perfectdreams.floppapower.utils.Constants
 import net.perfectdreams.floppapower.utils.InfoGenerationUtils
 
 class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSlashCommand("topmutualusers") {
-    override fun execute(event: SlashCommandEvent) {
+    override fun execute(event: SlashCommandInteractionEvent) {
         event.deferReply().queue()
         val hook = event.hook // This is a special webhook that allows you to send messages without having permissions in the channel and also allows ephemeral messages
 
@@ -88,12 +89,14 @@ class TopMutualUsersCommand(private val shardManager: ShardManager) : AbstractSl
 
         val (successfullyAddedUsers, lines) = generateTopUsersMutualGuildsLines()
         hook.editOriginal("**Todos os $userCacheSize usuários foram verificados! (${userWithMutualGuilds.size} válidos baseado no filtro)** <a:SCfloppaEARflop2:750859905858142258>\nResultado apenas possui os top $successfullyAddedUsers usuários, ignorando bots e usuários que estão na EPF!")
-            .retainFiles(listOf()) // Remove all files from the message
-            .addFile(
-                lines
-                    .joinToString("\n")
-                    .toByteArray(Charsets.UTF_8),
-                "users.txt"
+            .setReplace(false)
+            .setFiles(
+                FileUpload.fromData(
+                    lines
+                        .joinToString("\n")
+                        .toByteArray(Charsets.UTF_8),
+                    "users.txt"
+                )
             )
             .queue()
     }

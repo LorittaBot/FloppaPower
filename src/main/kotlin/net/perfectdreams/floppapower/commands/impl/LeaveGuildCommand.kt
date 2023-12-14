@@ -1,12 +1,12 @@
 package net.perfectdreams.floppapower.commands.impl
 
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.FloppaPower
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
 
 class LeaveGuildCommand(private val m: FloppaPower, private val shardManager: ShardManager) : AbstractSlashCommand("leaveguild") {
-    override fun execute(event: SlashCommandEvent) {
+    override fun execute(event: SlashCommandInteractionEvent) {
         val guildId = event.getOption("guild_id")?.asString?.toLongOrNull()
         val peguinGuardID = 819692196378443800L
 

@@ -1,14 +1,14 @@
 package net.perfectdreams.floppapower.commands.impl
 
 import net.dv8tion.jda.api.EmbedBuilder
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.FloppaPower
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
 import net.perfectdreams.floppapower.utils.Constants
 
 class SameAvatarHashCommand(private val m: FloppaPower, private val shardManager: ShardManager) : AbstractSlashCommand("sameavatar/hash") {
-    override fun execute(event: SlashCommandEvent) {
+    override fun execute(event: SlashCommandInteractionEvent) {
         val avatarId = event.getOption("hash")?.asString
 
         if (avatarId == null || avatarId.length !in Constants.AVATAR_HASH_LENGTH) {
@@ -32,7 +32,7 @@ class SameAvatarHashCommand(private val m: FloppaPower, private val shardManager
             .addEmbeds(
                 EmbedBuilder()
                     .setThumbnail(first.effectiveAvatarUrl)
-                    .addField("Avatar Hash", first.avatarId, true)
+                    .addField("Avatar Hash", first.avatarId.toString(), true)
                     .setDescription(
                         buildString {
                             matchedUsers.sortedByDescending { it.timeCreated }.forEach {

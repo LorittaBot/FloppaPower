@@ -7,11 +7,11 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import mu.KotlinLogging
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.MessageBuilder
 import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.UserSnowflake
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
@@ -21,6 +21,7 @@ import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
 import net.dv8tion.jda.api.sharding.ShardManager
 import net.dv8tion.jda.api.utils.ChunkingFilter
 import net.dv8tion.jda.api.utils.MemberCachePolicy
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import net.perfectdreams.floppapower.dao.BlockedAvatarHash
 import net.perfectdreams.floppapower.dao.BlockedAvatarHashBanEntry
 import net.perfectdreams.floppapower.dao.BlockedUser
@@ -41,12 +42,8 @@ import net.perfectdreams.floppapower.tables.UsersApprovals
 import net.perfectdreams.floppapower.utils.CheckedDueToType
 import net.perfectdreams.floppapower.utils.Constants
 import net.perfectdreams.floppapower.utils.FloppaButtonClickEvent
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.DEFAULT_REPETITION_ATTEMPTS
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.transactions.ThreadLocalTransactionManager
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -56,6 +53,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import kotlin.system.exitProcess
 
@@ -67,9 +65,6 @@ class FloppaPower {
         private val ISOLATION_LEVEL =
             IsolationLevel.TRANSACTION_REPEATABLE_READ // We use repeatable read to avoid dirty and non-repeatable reads! Very useful and safe!!
     }
-
-    val sqLiteDatabaseFile = File("floppa.db")
-    val sqliteDatabase = Database.connect("jdbc:sqlite:${sqLiteDatabaseFile.toPath()}", driver = "org.sqlite.JDBC")
 
     val database = initPostgreSQL(
         System.getenv("FLOPPA_DATABASE_ADDRESS"),
@@ -98,16 +93,11 @@ class FloppaPower {
             )
         }
 
-        if (System.getenv("FLOPPA_MIGRATE_DATABASE") == "true") {
-            MigrationTool.migrate(database, sqliteDatabase)
-            exitProcess(0)
-        }
-
         val shardManager = DefaultShardManagerBuilder.createDefault(
             System.getenv("FLOPPA_DISCORD_TOKEN"),
             GatewayIntent.GUILD_MEMBERS,
             GatewayIntent.GUILD_MESSAGES,
-            GatewayIntent.GUILD_BANS
+            GatewayIntent.GUILD_MODERATION
         ).setMemberCachePolicy(MemberCachePolicy.ALL) // we, want, EVERYTHING
             .setChunkingFilter(ChunkingFilter.ALL) // EVERYTHING
             .setStatus(OnlineStatus.INVISIBLE) // no one will ever know!
@@ -147,7 +137,7 @@ class FloppaPower {
                     try {
                         // Send the message if the content is not empty
                         val reportChannelId = shardManager.getTextChannelById(Constants.LOG_CHANNEL_ID) ?: continue
-                        reportChannelId.sendMessage(MessageBuilder(builder.toString()).setAllowedMentions(listOf()).build()).queue()
+                        reportChannelId.sendMessage(MessageCreateBuilder().setContent(builder.toString()).setAllowedMentions(listOf()).build()).queue()
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -182,8 +172,8 @@ class FloppaPower {
                                 guild.ban(
                                     member,
                                     0,
-                                    "FloppaPower! Self Bot (ID) Report #${blockedUser.entry.id.value}"
-                                ).queue()
+                                    TimeUnit.SECONDS
+                                ).reason("FloppaPower! Self Bot (ID) Report #${blockedUser.entry.id.value}").queue()
 
                                 log(
                                     shardManager,
@@ -224,9 +214,8 @@ class FloppaPower {
                                         guild.ban(
                                             member,
                                             0,
-                                            "FloppaPower! Self Bot (Avatar Hash) Report #${blockedAvatarHash.entry.id.value}"
-                                        )
-                                            .queue()
+                                            TimeUnit.SECONDS
+                                        ).reason("FloppaPower! Self Bot (Avatar Hash) Report #${blockedAvatarHash.entry.id.value}").queue()
 
                                         log(
                                             shardManager,
@@ -286,7 +275,7 @@ class FloppaPower {
                     val userId = it[BlockedUserBanEntries.user]
                     if (guild.selfMember.hasPermission(Permission.BAN_MEMBERS)) {
                         // hmm where is the unban(Long)?
-                        guild.unban(it[BlockedUserBanEntries.user].toString()).queue()
+                        guild.unban(UserSnowflake.fromId(it[BlockedUserBanEntries.user])).queue()
 
                         log(
                             shardManager,
@@ -319,7 +308,7 @@ class FloppaPower {
                     val userId = it[BlockedAvatarHashesBanEntries.user]
                     if (guild.selfMember.hasPermission(Permission.BAN_MEMBERS)) {
                         // hmm where is the unban(Long)?
-                        guild.unban(it[BlockedAvatarHashesBanEntries.user].toString()).queue()
+                        guild.unban(UserSnowflake.fromId(it[BlockedAvatarHashesBanEntries.user])).queue()
 
                         log(
                             shardManager,
@@ -414,11 +403,11 @@ class FloppaPower {
 
     private fun connectToDatabase(dataSource: HikariDataSource): Database =
         Database.connect(
-            HikariDataSource(dataSource)
-        ) {
+            HikariDataSource(dataSource),
             // This code is the same callback used in the "Database.connect(...)" call, but with the default isolation level change
-            ThreadLocalTransactionManager(it, DEFAULT_REPETITION_ATTEMPTS).also {
-                it.defaultIsolationLevel = ISOLATION_LEVEL.levelId // Change our default isolation level
+            databaseConfig = DatabaseConfig {
+                this.defaultRepetitionAttempts = 5
+                this.defaultIsolationLevel = ISOLATION_LEVEL.levelId // Change our default isolation level
             }
-        }
+        )
 }

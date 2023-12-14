@@ -3,9 +3,9 @@ package net.perfectdreams.floppapower.commands.impl
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.MessageEmbed
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
-import net.dv8tion.jda.api.interactions.components.Button
-import net.dv8tion.jda.api.interactions.components.ButtonStyle
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.interactions.components.buttons.Button
+import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.FloppaPower
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
@@ -13,7 +13,7 @@ import net.perfectdreams.floppapower.utils.Constants
 import net.perfectdreams.floppapower.utils.FloppaButton
 
 class CheckSimilarAvatarsCommand(private val m: FloppaPower, private val shardManager: ShardManager) : AbstractSlashCommand("checksimilaravatars") {
-    override fun execute(event: SlashCommandEvent) {
+    override fun execute(event: SlashCommandInteractionEvent) {
         val pageId = (event.getOption("page")?.asString?.toInt() ?: 1).coerceAtLeast(1)
 
         val reply = event.deferReply()
@@ -112,7 +112,7 @@ class CheckSimilarAvatarsCommand(private val m: FloppaPower, private val shardMa
                 embeds.add(
                     EmbedBuilder()
                         .setTitle("Usado por ${it.value.size} usuários")
-                        .addField("Avatar Hash", firstUser.avatarId, true)
+                        .addField("Avatar Hash", firstUser.avatarId.toString(), true)
                         .addField(
                             "Visto em Servidores (${guildsFound.size})",
                             serverListText.take(1000),

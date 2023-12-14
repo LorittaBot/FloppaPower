@@ -4,9 +4,9 @@ import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.User
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
-import net.dv8tion.jda.api.interactions.components.Button
-import net.dv8tion.jda.api.interactions.components.ButtonStyle
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.interactions.components.buttons.Button
+import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.sharding.ShardManager
 import net.perfectdreams.floppapower.FloppaPower
 import net.perfectdreams.floppapower.commands.AbstractSlashCommand
@@ -16,7 +16,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 
 class SusJoinsCommand(private val m: FloppaPower, private val shardManager: ShardManager) : AbstractSlashCommand("susjoins") {
-    override fun execute(event: SlashCommandEvent) {
+    override fun execute(event: SlashCommandInteractionEvent) {
         val diffBetweenJoinTimes = event.getOption("time")?.asString?.toLong() ?: error("Missing time!")
         val creationTimeDayFilter = event.getOption("creation_time_filter")?.asString?.toLong() ?: error("Missing time!")
         // val pageId = (event.getOption("page")?.asString?.toInt() ?: 1).coerceAtLeast(1)

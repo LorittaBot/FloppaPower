@@ -45,101 +45,73 @@ class SlashCommandListener(private val m: FloppaPower, private val shardManager:
         
         val guild = event.guild
 
-        guild.upsertCommand(
-            Commands.slash("guilds", "Mostra quais servidores o Floppa está")
-        ).queue()
-
-        guild.upsertCommand(
-            Commands.slash("leaveguild", "Faça o Floppa sair de um servidor em que ele está")
-                .addOption(OptionType.STRING, "guild_id", "ID do Servidor", true)
-        ).queue()
-
-        guild.upsertCommand(
-            Commands.slash("checkguild", "Verifique meliantes em um servidor")
-                .addOption(OptionType.STRING, "guild_id", "ID do Servidor", true)
-        ).queue()
-
-        guild.upsertCommand(
-            Commands.slash("checkguilds", "Verifique meliantes em todos os servidores que eu estou")
-        ).queue()
-
-        guild.upsertCommand(
-            Commands.slash("checksimilaravatars", "Verifique meliantes com avatares similares")
-                .addOption(OptionType.INTEGER, "page", "Página", false)
-        ).queue()
-
-        guild.upsertCommand(
-            Commands.slash("sameavatar", "Verifique meliantes que possuem o mesmo avatar")
-                .addSubcommands(
-                    SubcommandData("hash", "Verifique meliantes que possuem o mesmo avatar pelo hash")
-                        .addOption(OptionType.STRING, "hash", "O hash do avatar", true),
-                    SubcommandData("user", "Verifique meliantes que possuem o mesmo avatar pelo usuário")
-                        .addOption(OptionType.USER, "user", "O meliante", true)
-                )
-        ).queue()
-
-        guild.upsertCommand(
-            Commands.slash("sharedguilds", "Verifique aonde os meliantes estão na fuga")
-                .addOption(OptionType.USER, "user", "O meliante", true)
-        ).queue()
-
-        guild.upsertCommand(
-            Commands.slash("searchusers", "Busca usuários usando um RegEx")
-                .addOption(OptionType.STRING, "pattern", "RegEx pattern do nome de usuário que você deseja procurar", true)
-                .addOption(OptionType.BOOLEAN, "list", "Gera uma lista sem os detalhes", false)
-                .addOptions(
-                    OptionData(OptionType.STRING, "sort_by", "O que você quer ordenar os usuários por", false)
-                        .addChoice("Nome", "alphabetically")
-                        .addChoice("Criação", "creation_date")
-                        .addChoice("Mutual Guilds", "mutual_guilds")
+        guild.updateCommands()
+            .addCommands(
+                Commands.slash("guilds", "Mostra quais servidores o Floppa está"),
+                Commands.slash("leaveguild", "Faça o Floppa sair de um servidor em que ele está")
+                    .addOption(OptionType.STRING, "guild_id", "ID do Servidor", true),
+                Commands.slash("checkguild", "Verifique meliantes em um servidor")
+                    .addOption(OptionType.STRING, "guild_id", "ID do Servidor", true),
+                Commands.slash("checkguilds", "Verifique meliantes em todos os servidores que eu estou"),
+                Commands.slash("checksimilaravatars", "Verifique meliantes com avatares similares")
+                    .addOption(OptionType.INTEGER, "page", "Página", false),
+                Commands.slash("sameavatar", "Verifique meliantes que possuem o mesmo avatar")
+                    .addSubcommands(
+                        SubcommandData("hash", "Verifique meliantes que possuem o mesmo avatar pelo hash")
+                            .addOption(OptionType.STRING, "hash", "O hash do avatar", true),
+                        SubcommandData("user", "Verifique meliantes que possuem o mesmo avatar pelo usuário")
+                            .addOption(OptionType.USER, "user", "O meliante", true)
+                    ),
+                Commands.slash("sharedguilds", "Verifique aonde os meliantes estão na fuga")
+                    .addOption(OptionType.USER, "user", "O meliante", true),
+                Commands.slash("searchusers", "Busca usuários usando um RegEx")
+                    .addOption(OptionType.STRING, "pattern", "RegEx pattern do nome de usuário que você deseja procurar", true)
+                    .addOption(OptionType.BOOLEAN, "list", "Gera uma lista sem os detalhes", false)
+                    .addOptions(
+                        OptionData(OptionType.STRING, "sort_by", "O que você quer ordenar os usuários por", false)
+                            .addChoice("Nome", "alphabetically")
+                            .addChoice("Criação", "creation_date")
+                            .addChoice("Mutual Guilds", "mutual_guilds")
 
                     )
-                .addOptions(
-                    OptionData(OptionType.STRING, "creation_time_filter", "Filtrar usuários que criaram a conta recentemente, acelera a pesquisa de usuários", false)
-                        .addChoice("3 dias", "3")
-                        .addChoice("7 dias", "7")
-                        .addChoice("14 dias", "14")
-                        .addChoice("30 dias", "30")
-                        .addChoice("90 dias", "90")
-                        .addChoice("180 dias", "180")
-                        .addChoice("365 dias", "365")
-                        .addChoice("Gosto de ver pegando fogo!", "36500")
-                )
-        ).queue()
-
-        guild.upsertCommand(
-            Commands.slash("topmutualusers", "Mostra os top usuários que compartilham mais servidores com o Floppa")
-        ).queue()
-
-        guild.upsertCommand(
-            Commands.slash("susjoins", "Verifique meliantes que entraram em vários servidores em seguida")
-                .addOptions(
-                    OptionData(OptionType.STRING, "time", "A diferença + e - de tempo que o meliante entrou, baseado no tempo de entrada no \"meio\" dos joins", true)
-                        .addChoice("10 segundos", "5")
-                        .addChoice("15 segundos", "7")
-                        .addChoice("30 segundos", "15")
-                        .addChoice("Um minuto", "30")
-                        .addChoice("Dois minutos", "60")
-                        .addChoice("Cinco minutos", "150")
-                        .addChoice("Dez minutos", "300")
-                        .addChoice("Trinta minutos", "900")
-                )
-                .addOptions(
-                    OptionData(OptionType.STRING, "creation_time_filter", "Filtrar usuários que criaram a conta recentemente, acelera a pesquisa de usuários", true)
-                        .addChoice("3 dias", "3")
-                        .addChoice("7 dias", "7")
-                        .addChoice("14 dias", "14")
-                        .addChoice("30 dias", "30")
-                        .addChoice("90 dias", "90")
-                        .addChoice("180 dias", "180")
-                        .addChoice("365 dias", "365")
-                        .addChoice("Gosto de ver pegando fogo!", "36500")
-                )
-        ).queue()
-
-        guild.upsertCommand(
-            Commands.slash("ping", "Verifica se o Floppa está online")
-        ).queue()
+                    .addOptions(
+                        OptionData(OptionType.STRING, "creation_time_filter", "Filtrar usuários que criaram a conta recentemente, acelera a pesquisa de usuários", false)
+                            .addChoice("3 dias", "3")
+                            .addChoice("7 dias", "7")
+                            .addChoice("14 dias", "14")
+                            .addChoice("30 dias", "30")
+                            .addChoice("90 dias", "90")
+                            .addChoice("180 dias", "180")
+                            .addChoice("365 dias", "365")
+                            .addChoice("Gosto de ver pegando fogo!", "36500")
+                    ),
+                Commands.slash("topmutualusers", "Mostra os top usuários que compartilham mais servidores com o Floppa"),
+                Commands.slash("susjoins", "Verifique meliantes que entraram em vários servidores em seguida")
+                    .addOptions(
+                        OptionData(OptionType.STRING, "time", "A diferença + e - de tempo que o meliante entrou, baseado no tempo de entrada no \"meio\" dos joins", true)
+                            .addChoice("10 segundos", "5")
+                            .addChoice("15 segundos", "7")
+                            .addChoice("30 segundos", "15")
+                            .addChoice("Um minuto", "30")
+                            .addChoice("Dois minutos", "60")
+                            .addChoice("Cinco minutos", "150")
+                            .addChoice("Dez minutos", "300")
+                            .addChoice("Trinta minutos", "900")
+                    )
+                    .addOptions(
+                        OptionData(OptionType.STRING, "creation_time_filter", "Filtrar usuários que criaram a conta recentemente, acelera a pesquisa de usuários", true)
+                            .addChoice("3 dias", "3")
+                            .addChoice("7 dias", "7")
+                            .addChoice("14 dias", "14")
+                            .addChoice("30 dias", "30")
+                            .addChoice("90 dias", "90")
+                            .addChoice("180 dias", "180")
+                            .addChoice("365 dias", "365")
+                            .addChoice("Gosto de ver pegando fogo!", "36500")
+                    ),
+                Commands.slash("ping", "Verifica se o Floppa está online")
+            )
+            .queue()
     }
 
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
